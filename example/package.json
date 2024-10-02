@@ -1,0 +1,25 @@
+{
+  "name": "keyword-detection-web-example",
+  "version": "1.0.0",
+  "description": "An example app using keyword-detection-web",
+  "main": "example.js",
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack serve --open",
+    "clean": "rm -rf dist"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "keyword-detection-web": "^1.0.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/preset-env": "^7.14.7",
+    "babel-loader": "^8.2.2",
+    "copy-webpack-plugin": "^9.1.0",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^3.11.2"
+  }
+}
