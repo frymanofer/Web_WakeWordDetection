@@ -21,8 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const onKeywordDetected = (detected) => {
       if (detected) {
+        keywordDetector.stopListening();
         console.log('Keyword detected!');
         alert("Keyword detected!");
+        keywordDetector.startListening();
       }
     };
     const modelsFolderPath = "./models"

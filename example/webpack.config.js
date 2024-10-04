@@ -30,11 +30,14 @@ module.exports = {
   },
   plugins: [
     new CopyWebpackPlugin({
-      patterns: [{ from: 'models', to: 'models' }, // Copy models to 'dist/models'
-      {
-        from: path.resolve(__dirname, 'node_modules/keyword-detection-web/dist/d27ca340296764f46a45.wasm'),
-        to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
-      }
+      patterns: [
+        { // Copy models to 'dist/models'
+          from: 'models', to: 'models' 
+        }, 
+        { // Copy webassembly file to dist
+          from: path.resolve(__dirname, 'node_modules/keyword-detection-web/dist/d27ca340296764f46a45.wasm'),
+          to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
+        }
     ]
     }),
   ],

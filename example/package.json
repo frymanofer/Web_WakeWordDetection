@@ -11,7 +11,7 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "keyword-detection-web": "^1.0.1"
+    "keyword-detection-web": "^1.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",
