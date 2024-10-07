@@ -47,7 +47,10 @@ nopenssl req -new -key key.pem -out csr.pem
 
 nopenssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
 
-### Now open a browser with the following URL https://192.168.1.218:8080
+### Next steps
+Open a browser with the following URL https://192.168.1.218:8080 <br>
+See that it is working for you.<br>
+Integrate it to your life website/app.<br>
 
 ## Contact us
 If you need any help contact us: ofer@davoice.io
