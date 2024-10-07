@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/release/frymanofer/KeyWordDetectionIOSFramework.svg)](https://github.com/frymanofer/KeyWordDetectionIOSFramework/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-By [DaVoice.io](https://davoice.io)
+By [DaVoice.io](https://davoice.io) email: ofer@davoice.io
 
 [![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2FDaVoiceAI)](https://twitter.com/DaVoiceAI)
 
@@ -25,15 +25,32 @@ For any questions, requirements, or more support for React-Native, please contac
 
 # Example
 cd example
+
 npm install
+
 npx webpack --config webpack.config.js
 
-# Run and https server to test the wake words need help now
+# Test it in a browser:
+You can run use https server to test the wake words.
+
+Here is an example:
+
 npm install -g http-server
+
 http-server . -p 8080 --ssl --cert cert.pem --key key.pem
 
-# Open a browser with https://192.168.1.218:8080/
+## If you do not have cert.pem and/or key.pem: you can create them as follow:
 
+nopenssl genrsa -out key.pem 2048
+
+nopenssl req -new -key key.pem -out csr.pem
+
+nopenssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
+
+### Now open a browser with the following URL https://192.168.1.218:8080
+
+## Contact us
+If you need any help contact us: ofer@davoice.io
 
 ## Links
 
