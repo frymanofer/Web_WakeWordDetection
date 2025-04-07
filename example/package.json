@@ -4,7 +4,7 @@
   "description": "An example app using web-wake-word",
   "main": "example.js",
   "scripts": {
-    "build": "export LICENSE_KEY=$(cat licensekey.txt) && npx webpack --config webpack.config.js",
+    "build": "rm -rf dist && export LICENSE_KEY=$(cat licensekey.txt) && npx webpack --config webpack.config.js",
     "start": "http-server . -p 8080 --ssl --cert cert.pem --key key.pem",
     "clean": "rm -rf dist"
   },
@@ -21,6 +21,6 @@
   },
   "dependencies": {
     "path-browserify": "^1.0.1",
-    "web-wake-word": "^1.0.37"
+    "web-wake-word": "^2.0.2"
   }
 }

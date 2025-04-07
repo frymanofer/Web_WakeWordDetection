@@ -39,9 +39,14 @@ module.exports = {
           from: 'models', to: 'models' 
         }, 
         { // Copy webassembly file to dist
-          from: 'node_modules/web-wake-word/dist/ort-wasm-simd-threaded.wasm',
+          from: 'node_modules/web-wake-word/dist/ort-wasm-simd.wasm*',
+//          from: 'node_modules/web-wake-word/dist/50b7c0f667efcee7087e.wasm',
           to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
         },
+        { 
+          from: 'node_modules/web-wake-word/dist/ort-wasm-simd.mjs', // Add this line
+          to: path.resolve(__dirname, 'dist/[name][ext]'), 
+        },    
         { // Copy webassembly file to dist
           from: 'node_modules/web-wake-word/dist/audio-worklet-processor.js',
           to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
@@ -54,5 +59,5 @@ module.exports = {
     compress: true,
     port: 8080, // Port for development server
   },
-  mode: 'production', // Use development mode for the example
+  mode: 'development', // Use development mode for the example
 };
