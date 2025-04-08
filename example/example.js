@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
      
     const modelParamsArr = [
       { modelToUse: "hey_lookdeep.onnx", threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
-      { modelToUse: "need_help_now.onnx", threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
+//      { modelToUse: "need_help_now.onnx", threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
 // Add more models      { modelToUse: "salut_mia_model_28_20012025.onnx", threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
     ];
     statusElement.textContent = 'Loading models: ' + 
