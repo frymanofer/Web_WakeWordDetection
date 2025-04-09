@@ -14,15 +14,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const statusElement = document.getElementById('status');
 
-  const onKeywordDetected = (detected) => {
+  const onKeywordDetected = async (detected) => {
       if (detected) {
-        keywordDetector.stopListening();
+        await keywordDetector.stopListening();
 
         console.log('Keyword detected \nprediction: ' + detected.prediction);
         console.log('cntBuf: ' + detected.cntBuf);
         console.log('Model: ' + detected.model);
         alert("Keyword detected: " + detected.model);
-        keywordDetector.startListening();
+        await keywordDetector.startListening();
       }
     };
     const modelsFolderPath = "./models"
@@ -50,7 +50,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     statusElement.textContent = 'Loading models: ' + 
     modelParamsArr.map(m => m.modelToUse.replace(/\.onnx$/, '').replace(/_/g, ' ')).join(', ');
     
-    const keywordDetector = new KeywordDetector(modelsFolderPath, modelParamsArr, "./dist/", "./dist/");
+    const keywordDetector = new KeywordDetector(modelsFolderPath,
+       modelParamsArr, "./dist/", "./dist/");
     
     const isLicensed = await keywordDetector.setLicense(licenseKey);
     if (!isLicensed) {
