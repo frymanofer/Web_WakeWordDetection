@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  //const licenseManager = new window.main.LicenseManager();
   // Read the license key from the file
 //  const licenseKey = process.env.LICENSE_KEY || "DEFAULT_LICENSE_KEY";
-  const licenseKey = "MTc0NzI1NjQwMDAwMA==-+8iM4SOprtUFdw7//VJCKj23UUr98HLUdvYDixtvRDo=";
+  const licenseKey = "MTc1MjUyNjgwMDAwMA==-RbOr3R66OPByzZxLe7vgM6JDlrrejrgRzbo41+g8qrM=";
   console.log('License Key:', licenseKey);
   // Initialize Keyword Detector
   const threshold = 0.99;
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     modelParamsArr.map(m => m.modelToUse.replace(/\.onnx$/, '').replace(/_/g, ' ')).join(', ');
     
     const keywordDetector = new KeywordDetector(modelsFolderPath,
-       modelParamsArr, "./dist/", "./dist/");
+       modelParamsArr, "https://127.0.0.1:8080/dist/", "./dist/");
     
     const isLicensed = await keywordDetector.setLicense(licenseKey);
     if (!isLicensed) {
