@@ -17,15 +17,16 @@ function fileExists(filePath) {
   }
 }
 
-// Skip generation if already exists
+let configArg = '';
+const isWindows = os.platform() === 'win32';
+
 if (fileExists(KEY_FILE) && fileExists(CERT_FILE)) {
   console.log('[✔] key.pem and cert.pem already exist — skipping generation.');
   process.exit(0);
 }
 
-// Windows-specific: generate minimal openssl.cnf if missing
-let configArg = '';
-if (os.platform() === 'win32') {
+// Generate minimal openssl.cnf on Windows
+if (isWindows) {
   console.log('** Using WINDOWS config **');
   if (!fileExists(OPENSSL_CONFIG_PATH)) {
     const minimalConfig = `
@@ -40,6 +41,7 @@ distinguished_name = req_distinguished_name
 }
 
 console.log('[🔐] Generating key.pem...');
+// genrsa emits a config warning on Windows, safe to ignore
 execSync(`openssl genrsa -out ${KEY_FILE} 2048`, { stdio: 'inherit' });
 
 console.log('[📋] Creating CSR (certificate signing request)...');
@@ -48,7 +50,6 @@ execSync(`openssl req -new -key ${KEY_FILE} -out ${CSR_FILE} ${configArg}`, { st
 console.log('[📄] Signing certificate...');
 execSync(`openssl x509 -req -days 365 -in ${CSR_FILE} -signkey ${KEY_FILE} -out ${CERT_FILE}`, { stdio: 'inherit' });
 
-// Optional: clean up CSR
 try {
   fs.unlinkSync(CSR_FILE);
   console.log('[🧹] Cleaned up csr.pem');
