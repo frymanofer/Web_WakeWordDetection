@@ -26,22 +26,33 @@ if (fileExists(KEY_FILE) && fileExists(CERT_FILE)) {
 }
 
 // Generate minimal openssl.cnf on Windows
-if (isWindows) {
-  console.log('** Using WINDOWS config **');
-  if (!fileExists(OPENSSL_CONFIG_PATH)) {
-    const minimalConfig = `
+if (isWindows && !fileExists(OPENSSL_CONFIG_PATH)) {
+  const config = `
 [ req ]
+default_bits       = 2048
+default_md         = sha256
 distinguished_name = req_distinguished_name
+prompt             = no
+
 [ req_distinguished_name ]
+C  = US
+ST = State
+L  = City
+O  = Organization
+OU = Unit
+CN = localhost
 `;
-    fs.writeFileSync(OPENSSL_CONFIG_PATH, minimalConfig);
-    console.log('[📝] Created minimal OpenSSL config for Windows.');
-  }
+  fs.writeFileSync(OPENSSL_CONFIG_PATH, config);
+  console.log('[📝] Created minimal OpenSSL config for Windows.');
+}
+
+// Assign config argument only on Windows
+if (isWindows) {
   configArg = `-config "${OPENSSL_CONFIG_PATH}"`;
 }
 
 console.log('[🔐] Generating key.pem...');
-// genrsa emits a config warning on Windows, safe to ignore
+// genrsa emits a harmless config warning on Windows — safe to ignore
 execSync(`openssl genrsa -out ${KEY_FILE} 2048`, { stdio: 'inherit' });
 
 console.log('[📋] Creating CSR (certificate signing request)...');
