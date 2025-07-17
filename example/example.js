@@ -4,6 +4,14 @@ import { KeywordDetector } from 'web-wake-word';
 
 const modelsSuffix = '.onnx';
 
+/*
+  *** IMPORTANT ***
+  YOU MUST COPY THE FOLLOWNG 3 FILES/FOLDERS to your app dist, public or any suitable folder.
+  Copy the models/ folder to your dist, public or other folder inside your app.
+  Copy ort-wasm-simd.wasm file from node_modules/web-wake-word/dist/ort-wasm-simd.wasm to your dist, public or other folder inside your app.
+  Copy node_modules/web-wake-word/dist/audio-worklet-processor.js to your dist, public or other folder inside your app.
+*/
+
 document.addEventListener('DOMContentLoaded', async () => {
  //const licenseManager = new window.main.LicenseManager();
   // Read the license key from the file
@@ -76,10 +84,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     ];
     statusElement.textContent = 'Loading models: ' + 
     modelParamsArr.map(m => m.modelToUse.replace(/\.onnx$/, '').replace(/_/g, ' ')).join(', ');
-    
-    const keywordDetector = new KeywordDetector(modelsFolderPath,
-       modelParamsArr, "https://127.0.0.1:8080/dist/", "./dist/");
-    
+
+    /* 
+      *** IMPORTANT ***
+      Calling KeywordDetector constructor API in your app!
+      
+      The constructor API is as follow:     
+      KeywordDetector(modelsFolderPath, modelParams, wasmBasePath, 
+        audioWorkletPath);
+
+      modelsFolderPath - path to the models directory.
+      modelParams - the models to use and their configuration
+      wasmBasePath - the location of wasm file
+      audioWorkletPath - the location of audioWorklet
+
+      As mentioned above! - You will need to copy ort-wasm-simd.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
+      The file is found in the dist folder: "node_modules/web-wake-word/dist/ort-wasm-simd.wasm" in the example below we place it in 
+      https://127.0.0.1:8080/dist/
+      Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word/dist/audio-worklet-processor.js"
+      You will also need to copy it and determine its location
+    */
+    const keywordDetector = new KeywordDetector(
+      /* Provide a link to the model location in your app */ 
+      modelsFolderPath,
+      modelParamsArr, 
+      /* Provide a link to the wasm file location in your app */
+      "https://127.0.0.1:8080/dist/",
+      /* Provide a link to the audio-worklet-processor.js file location in your app */ 
+      "./dist/");
+  
     const isLicensed = await keywordDetector.setLicense(licenseKey);
     if (!isLicensed) {
       alert('Invalid or expired license key.');
