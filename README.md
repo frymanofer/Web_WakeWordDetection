@@ -79,10 +79,9 @@ nopenssl req -new -key key.pem -out csr.pem
 nopenssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
 
 # Integrating to your app:
-Add web-wake-word to your app.
 
+## Add web-wake-word to your app.
 npm install web-wake-word@latest.
-
 or add to package.json the following where x,y,z is the version you can find in https://www.npmjs.com/package/web-wake-word:
 ```
  "web-wake-word": "^x.y.z",
@@ -92,7 +91,15 @@ For example:
  "web-wake-word": "^2.0.8"
 ```
 
-Than add the follwing code:
+## Copy necessary files to your dist, public or other folder in your application:
+**YOU MUST COPY THE FOLLOWNG 3 FILES/FOLDERS to your app**
+- Copy the **models/** folder to your dist, public or other folder inside your app.
+- Copy **ort-wasm-simd.wasm** file from node_modules/web-wake-word/dist/ort-wasm-simd.wasm to your dist, public or other folder inside your app.
+- Copy **node_modules/web-wake-word/dist/audio-worklet-processor.js** to your dist, public or other folder inside your app.
+
+## Add code to use it;
+
+Then you can add the follwing code or copy past parts that you need:
 
 ```js
 import { KeywordDetector } from 'web-wake-word';
