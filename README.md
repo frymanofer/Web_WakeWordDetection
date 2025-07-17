@@ -78,6 +78,101 @@ nopenssl req -new -key key.pem -out csr.pem
 
 nopenssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
 
+# Integrating to your app:
+Add web-wake-word to your app.
+
+npm install web-wake-word@latest.
+
+or add to package.json the following where x,y,z is the version you can find in https://www.npmjs.com/package/web-wake-word:
+```
+ "web-wake-word": "^x.y.z",
+```
+For example:
+```
+ "web-wake-word": "^2.0.8"
+```
+
+Than add the follwing code:
+
+```js
+import { KeywordDetector } from 'web-wake-word';
+
+// Your code ....
+
+const modelsSuffix = '.onnx';
+  // ******** Check for the latest License *********
+  const licenseKey = "MTc1MjUyNjgwMDAwMA==-RbOr3R66OPByzZxLe7vgM6JDlrrejrgRzbo41+g8qrM=";
+  console.log('License Key:', licenseKey);
+  // Initialize Keyword Detector
+  const threshold = 0.99;
+  const bufferCount = 3;
+
+// Your code ....
+
+  // Setup the callback:
+  const onKeywordDetected = async (detected) => {
+      if (detected) {
+        await keywordDetector.stopListening();
+
+        console.log('Keyword detected \nprediction: ' + detected.prediction);
+        console.log('cntBuf: ' + detected.cntBuf);
+        console.log('Model: ' + detected.model);
+//        alert("Keyword detected: " + detected.model);
+        showAutoClosingAlert("Keyword detected: " + detected.model, 5000);
+
+        await keywordDetector.startListening();
+      }
+    };
+
+    // Provide the url to the models location. To be provided to KeywordDetector constructor
+    const modelsFolderPath = "./models"
+
+    // Configure the models to be used and their settings
+    const modelParamsArr = [
+      { modelToUse: "hey_lookdeep" + modelsSuffix, threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
+// More models to detect -  { modelToUse: "need_help_now"  + modelsSuffix, threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
+// Add more models      { modelToUse: "salut_mia_model_28_20012025"  + modelsSuffix, threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
+    ];
+
+    modelParamsArr.map(m => m.modelToUse.replace(/\.onnx$/, '').replace(/_/g, ' ')).join(', ');
+
+    /* KeywordDetector API:
+      KeywordDetector(modelsFolderPath, modelParams, wasmBasePath, 
+        audioWorkletPath);
+
+      modelsFolderPath - path to the models directory.
+      modelParams - the models to use and their configuration
+      wasmBasePath - the location of wasm file
+      audioWorkletPath - the location of audioWorklet
+
+      You will need to copy ort-wasm-simd.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
+      The file is found in the dist folder: "node_modules/web-wake-word/dist/ort-wasm-simd.wasm" in the example below we place it in 
+      https://127.0.0.1:8080/dist/
+      Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word/dist/audio-worklet-processor.js"
+      You will also need to copy it and determine its location
+    */
+    const keywordDetector = new KeywordDetector(modelsFolderPath,
+       modelParamsArr, "https://127.0.0.1:8080/dist/", "./dist/"); // the two last arguments are the wasm location and audioWorkletPath location.
+
+    const isLicensed = await keywordDetector.setLicense(licenseKey);
+    if (!isLicensed) {
+      alert('Invalid or expired license key.');
+      return;
+    }
+   
+  try {
+    await keywordDetector.init();
+    statusElement.textContent = 'Models loaded. Listening for keywords...' + 
+    modelParamsArr.map(m => m.modelToUse.replace(/\.onnx$/, '').replace(/_/g, ' ')).join(', ');
+    
+    // Start listening for keywords
+    keywordDetector.startListening();
+  } catch (error) {
+    console.error('Initialization error:', error);
+    statusElement.textContent = 'Error initializing keyword detector.';
+  }
+});
+```
 # Using specific path to wasm file:
 
 If you need to the wasm file path, you can add another variable to KeywordDetector constructor.
