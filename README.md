@@ -80,29 +80,29 @@ nopenssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
 
 # Integrating to your app:
 
-## Add web-wake-word to your app.
-npm install web-wake-word@latest.
-or add to package.json the following where x,y,z is the version you can find in https://www.npmjs.com/package/web-wake-word:
+## Add web-wake-word-cpu-gpu-opt to your app.
+npm install web-wake-word-cpu-gpu-opt@latest.
+or add to package.json the following where x,y,z is the version you can find in https://www.npmjs.com/package/web-wake-word-cpu-gpu-opt:
 ```
- "web-wake-word": "^x.y.z",
+ "web-wake-word-cpu-gpu-opt": "^x.y.z",
 ```
 For example:
 ```
- "web-wake-word": "^2.0.8"
+ "web-wake-word-cpu-gpu-opt": "^2.0.8"
 ```
 
 ## Copy necessary files to your dist, public or other folder in your application:
 **YOU MUST COPY THE FOLLOWNG 3 FILES/FOLDERS to your app**
 - Copy the **models/** folder to your dist, public or other folder inside your app.
-- Copy **ort-wasm-simd.wasm** file from node_modules/web-wake-word/dist/ort-wasm-simd.wasm to your dist, public or other folder inside your app.
-- Copy **node_modules/web-wake-word/dist/audio-worklet-processor.js** to your dist, public or other folder inside your app.
+- Copy **ort-wasm-simd-threaded.wasm** file from node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.wasm to your dist, public or other folder inside your app.
+- Copy **node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js** to your dist, public or other folder inside your app.
 
 ## Add code to use it;
 
 Then you can add the follwing code or copy past parts that you need:
 
 ```js
-import { KeywordDetector } from 'web-wake-word';
+import { KeywordDetector } from 'web-wake-word-cpu-gpu-opt';
 
 // Your code ....
 
@@ -152,10 +152,10 @@ const modelsSuffix = '.onnx';
       wasmBasePath - the location of wasm file
       audioWorkletPath - the location of audioWorklet
 
-      You will need to copy ort-wasm-simd.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
-      The file is found in the dist folder: "node_modules/web-wake-word/dist/ort-wasm-simd.wasm" in the example below we place it in 
+      You will need to copy ort-wasm-simd-threaded.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
+      The file is found in the dist folder: "node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.wasm" in the example below we place it in 
       https://127.0.0.1:8080/dist/
-      Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word/dist/audio-worklet-processor.js"
+      Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js"
       You will also need to copy it and determine its location
     */
     const keywordDetector = new KeywordDetector(modelsFolderPath,
@@ -276,7 +276,7 @@ DaVoice.io javascript "Voice commands" "Wake words" "Voice to Intent" "keyword d
 
 ## Links
 
-- **Web / Javascript / React.JS / Angula / Vue.js Wake Word npm package:** https://www.npmjs.com/package/web-wake-word
+- **Web / Javascript / React.JS / Angula / Vue.js Wake Word npm package:** https://www.npmjs.com/package/web-wake-word-cpu-gpu-opt
 - **If you need React-Native wake word: ** https://www.npmjs.com/package/react-native-wakeword
 
 Here are wakeword detection GitHub links per platform:

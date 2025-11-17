@@ -1,5 +1,5 @@
 // example/example.js
-import { KeywordDetector } from 'web-wake-word';
+import { KeywordDetector } from 'web-wake-word-cpu-gpu-opt';
 //import path from 'path-browserify';
 
 const modelsSuffix = '.onnx';
@@ -8,8 +8,8 @@ const modelsSuffix = '.onnx';
   *** IMPORTANT ***
   YOU MUST COPY THE FOLLOWNG 3 FILES/FOLDERS to your app dist, public or any suitable folder.
   Copy the models/ folder to your dist, public or other folder inside your app.
-  Copy ort-wasm-simd-threaded.jsep.jsep.wasm file from node_modules/web-wake-word/dist/ort-wasm-simd-threaded.jsep.jsep.wasm to your dist, public or other folder inside your app.
-  Copy node_modules/web-wake-word/dist/audio-worklet-processor.js to your dist, public or other folder inside your app.
+  Copy ort-wasm-simd-threaded.jsep.jsep.wasm file from node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.jsep.jsep.wasm to your dist, public or other folder inside your app.
+  Copy node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js to your dist, public or other folder inside your app.
 */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -99,9 +99,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       audioWorkletPath - the location of audioWorklet
 
       As mentioned above! - You will need to copy ort-wasm-simd-threaded.jsep.jsep.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
-      The file is found in the dist folder: "node_modules/web-wake-word/dist/ort-wasm-simd-threaded.jsep.jsep.wasm" in the example below we place it in 
+      The file is found in the dist folder: "node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.jsep.jsep.wasm" in the example below we place it in 
       https://127.0.0.1:8080/dist/
-      Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word/dist/audio-worklet-processor.js"
+      Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js"
       You will also need to copy it and determine its location
     */
     const keywordDetector = new KeywordDetector(

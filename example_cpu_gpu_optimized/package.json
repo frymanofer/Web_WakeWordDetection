@@ -1,7 +1,7 @@
 {
-  "name": "web-wake-word-example",
+  "name": "web-wake-word-cpu-gpu-opt-example",
   "version": "1.0.12",
-  "description": "An example app using web-wake-word",
+  "description": "An example app using web-wake-word-cpu-gpu-opt",
   "main": "example.js",
   "scripts": {
     "build": "node build.js",
@@ -25,6 +25,6 @@
   "dependencies": {
     "http-server": "^14.1.1",
     "path-browserify": "^1.0.1",
-    "web-wake-word": "^2.0.7"
+    "web-wake-word-cpu-gpu-opt": "^2.0.9"
   }
 }

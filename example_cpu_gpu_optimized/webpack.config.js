@@ -14,7 +14,7 @@ module.exports = {
         test: /\.js$/,
         include: [
           path.resolve(__dirname, 'example.js'),
-          path.resolve(__dirname, 'node_modules/web-wake-word'), // Include the library
+          path.resolve(__dirname, 'node_modules/web-wake-word-cpu-gpu-opt'), // Include the library
         ],
         use: {
           loader: 'babel-loader',
@@ -39,16 +39,16 @@ module.exports = {
           from: 'models', to: 'models' 
         }, 
         { // Copy webassembly file to dist
-          from: 'node_modules/web-wake-word/dist/ort-wasm-simd-threaded.jsep.wasm*',
-//          from: 'node_modules/web-wake-word/dist/50b7c0f667efcee7087e.wasm',
+          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.jsep.wasm*',
+//          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/50b7c0f667efcee7087e.wasm',
           to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
         },
         { 
-          from: 'node_modules/web-wake-word/dist/ort-wasm-simd-threaded.jsep.mjs', // Add this line
+          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.jsep.mjs', // Add this line
           to: path.resolve(__dirname, 'dist/[name][ext]'), 
         },    
         { // Copy webassembly file to dist
-          from: 'node_modules/web-wake-word/dist/audio-worklet-processor.js',
+          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js',
           to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
         }
     ]
