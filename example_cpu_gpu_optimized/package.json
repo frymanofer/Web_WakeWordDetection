@@ -25,6 +25,6 @@
   "dependencies": {
     "http-server": "^14.1.1",
     "path-browserify": "^1.0.1",
-    "web-wake-word-cpu-gpu-opt": "^2.0.9"
+    "web-wake-word-cpu-gpu-opt": "^2.0.11"
   }
 }
