@@ -8,7 +8,7 @@ const modelsSuffix = '.onnx';
   *** IMPORTANT ***
   YOU MUST COPY THE FOLLOWNG 3 FILES/FOLDERS to your app dist, public or any suitable folder.
   Copy the models/ folder to your dist, public or other folder inside your app.
-  Copy ort-wasm-simd.wasm file from node_modules/web-wake-word/dist/ort-wasm-simd.wasm to your dist, public or other folder inside your app.
+  Copy ort-wasm-simd-threaded.jsep.jsep.wasm file from node_modules/web-wake-word/dist/ort-wasm-simd-threaded.jsep.jsep.wasm to your dist, public or other folder inside your app.
   Copy node_modules/web-wake-word/dist/audio-worklet-processor.js to your dist, public or other folder inside your app.
 */
 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  //const licenseManager = new window.main.LicenseManager();
   // Read the license key from the file
 //  const licenseKey = process.env.LICENSE_KEY || "DEFAULT_LICENSE_KEY";
-  const licenseKey = "MTc1Nzg4MzYwMDAwMA==-lULiXsf2XwqYXN5iJ8XddZTWT/r0T14dWX6zhyWGGO4=";
+  const licenseKey = "MTc3MTEwNjQwMDAwMA==-hXsa5TMbkBktquvv0IUJ6sWIh0PoF+lXZDNjBvW0kio=";
   console.log('License Key:', licenseKey);
   // Initialize Keyword Detector
   const threshold = 0.99;
@@ -98,12 +98,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       wasmBasePath - the location of wasm file
       audioWorkletPath - the location of audioWorklet
 
-      As mentioned above! - You will need to copy ort-wasm-simd.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
-      The file is found in the dist folder: "node_modules/web-wake-word/dist/ort-wasm-simd.wasm" in the example below we place it in 
+      As mentioned above! - You will need to copy ort-wasm-simd-threaded.jsep.jsep.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
+      The file is found in the dist folder: "node_modules/web-wake-word/dist/ort-wasm-simd-threaded.jsep.jsep.wasm" in the example below we place it in 
       https://127.0.0.1:8080/dist/
       Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word/dist/audio-worklet-processor.js"
       You will also need to copy it and determine its location
     */
+
     const keywordDetector = new KeywordDetector(
       /* Provide a link to the model location in your app */ 
       modelsFolderPath,

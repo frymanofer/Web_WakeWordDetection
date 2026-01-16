@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  //const licenseManager = new window.main.LicenseManager();
   // Read the license key from the file
 //  const licenseKey = process.env.LICENSE_KEY || "DEFAULT_LICENSE_KEY";
-  const licenseKey = "MTg5MzQ0ODgwMDAwMA==-eWUtTQZGhOTMeztrVdi8zYMrPac09RFRftSMIe1yaDE=";
+  const licenseKey = "MTc1Nzg4MzYwMDAwMA==-lULiXsf2XwqYXN5iJ8XddZTWT/r0T14dWX6zhyWGGO4=";
   console.log('License Key:', licenseKey);
   // Initialize Keyword Detector
   const threshold = 0.99;
