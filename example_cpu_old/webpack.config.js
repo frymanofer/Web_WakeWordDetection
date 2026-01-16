@@ -14,7 +14,7 @@ module.exports = {
         test: /\.js$/,
         include: [
           path.resolve(__dirname, 'example.js'),
-          path.resolve(__dirname, 'node_modules/web-wake-word-cpu-gpu-opt'), // Include the library
+          path.resolve(__dirname, 'node_modules/web-wake-word'), // Include the library
         ],
         use: {
           loader: 'babel-loader',
@@ -35,32 +35,23 @@ module.exports = {
     }),
     new CopyWebpackPlugin({
       patterns: [
-        {
-          // Copy models to 'dist/models'
-          from: 'models',
-          to: 'models',
+        { // Copy models to 'dist/models'
+          from: 'models', to: 'models' 
+        }, 
+        { // Copy webassembly file to dist
+          from: 'node_modules/web-wake-word/dist/ort-wasm-simd.wasm*',
+//          from: 'node_modules/web-wake-word/dist/50b7c0f667efcee7087e.wasm',
+          to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
         },
-        {
-          // Copy WASM file(s) to dist
-          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.jsep.wasm*',
-          to: path.resolve(__dirname, 'dist/[name][ext]'),
-        },
-        {
-          // Copy .mjs loader
-          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.jsep.mjs',
-          to: path.resolve(__dirname, 'dist/[name][ext]'),
-        },
-        {
-          // Copy audio worklet file to dist
-          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js',
-          to: path.resolve(__dirname, 'dist/[name][ext]'),
-        },
-        {
-          // ⬇️ IMPORTANT: copy the worker bundle to dist
-          from: 'node_modules/web-wake-word-cpu-gpu-opt/dist/keywordDetector.worker.js',
-          to: path.resolve(__dirname, 'dist/[name][ext]'),
-        },
-      ],
+        { 
+          from: 'node_modules/web-wake-word/dist/ort-wasm-simd.mjs', // Add this line
+          to: path.resolve(__dirname, 'dist/[name][ext]'), 
+        },    
+        { // Copy webassembly file to dist
+          from: 'node_modules/web-wake-word/dist/audio-worklet-processor.js',
+          to: path.resolve(__dirname, 'dist/[name][ext]'), // Copy WASM file to dist
+        }
+    ]
     }),
   ],
   devServer: {
