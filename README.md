@@ -11,6 +11,10 @@ By [DaVoice.io](https://davoice.io) email: ofer@davoice.io
 
 Welcome to **Davoice Wake Words** – the premier Wake Words / keyword detection solution designed by **DaVoice.io**.
 
+## New
+
+Chaned the main example to support GPU and CPU optimization.
+
 ## About this project
 
 This is a **"wake word"** package for React.js, Javascript, Angular, Vue.js, Svelte, Next.js, Nuxt.js, Gatsby, Ember.js, Backbone.js and Mithril.js. A wake word is a keyword that activates your device, like "Hey Siri" or "OK Google". "Wake Word" is also known as "keyword detection", "Phrase Recognition", "Phrase Spotting", “Voice triggered”, “hotword”, “trigger word”
