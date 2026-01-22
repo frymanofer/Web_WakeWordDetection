@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build.js",
     "gen-cert": "node generate-cert.js",
-    "start": "node generate-cert.js && http-server . -p 8080 --ssl --cert cert.pem --key key.pem",
+    "start": "node generate-cert.js && http-server . -p 8080 --ssl --cert cert.pem --key key.pem --cors",
     "clean": "rimraf dist"
   },
   "author": "Your Name",
