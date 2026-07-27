@@ -8,6 +8,48 @@
   <h1>Keyword Detection Example</h1>
   <div id="status">Initializing...</div>
 
+  <!-- STT UI hidden - wake word detection only for now. Re-enable by removing display:none below and uncommenting bindSpeechToText() in example.js -->
+  <div id="sttLanguageRow" style="margin-top: 12px; display: none;">
+    <label for="sttLanguage">Speech-to-text language: </label>
+    <select id="sttLanguage">
+      <option value="en-US">English (US)</option>
+      <option value="en-GB">English (UK)</option>
+      <option value="es-ES">Spanish (Spain)</option>
+      <option value="es-MX">Spanish (Mexico)</option>
+      <option value="fr-FR">French</option>
+      <option value="de-DE">German</option>
+      <option value="it-IT">Italian</option>
+      <option value="pt-BR">Portuguese (Brazil)</option>
+      <option value="ja-JP">Japanese</option>
+      <option value="zh-CN">Chinese (Mandarin)</option>
+      <option value="hi-IN">Hindi</option>
+      <option value="ar-SA">Arabic</option>
+      <option value="__other__">Other&hellip; (enter language code)</option>
+    </select>
+    <input
+      id="sttLanguageCustom"
+      type="text"
+      placeholder="e.g. uk-UA"
+      style="display:none; margin-left:8px; width:120px;"
+    />
+    <span id="sttUnsupportedNote" style="display:none; color:#a00; margin-left:8px;">
+      Speech-to-text is not supported in this browser &mdash; wake-word detection will continue without it.
+    </span>
+    <div id="sttLanguageHint" style="display:none; font-size:13px; color:#666; margin-top:4px;">
+      Browsers don't expose a list of languages <code>SpeechRecognition</code> actually supports &mdash;
+      enter any <a href="https://www.iana.org/assignments/language-subtag-registry" target="_blank" rel="noopener">BCP-47</a>
+      code (e.g. <code>uk-UA</code>, <code>ko-KR</code>, <code>nl-NL</code>) and press Enter. If it's not
+      supported, the speech-to-text panel will show a recognition error.
+    </div>
+  </div>
+
+  <!-- STT panel hidden along with sttLanguageRow above -->
+  <div id="sttPanel" style="display:none; margin-top:16px; padding:16px; border:1px solid #ccc; border-radius:8px; max-width:480px; background:#fafafa; font-family:sans-serif;">
+    <h3 id="sttHeading" style="margin-top:0;">Listening for command&hellip;</h3>
+    <p id="sttTranscript" style="min-height:24px; font-size:16px; color:#333;"></p>
+    <button id="sttStopButton">Stop</button>
+  </div>
+
   <!-- Load the example script -->
   <script src="dist/example.bundle.js"></script>
 </body>

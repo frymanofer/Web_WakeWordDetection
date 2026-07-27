@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  //const licenseManager = new window.main.LicenseManager();
   // Read the license key from the file
 //  const licenseKey = process.env.LICENSE_KEY || "DEFAULT_LICENSE_KEY";
-  const licenseKey = "MTc3NDkwNDQwMDAwMA==-z/W+fYYTMV1BNZqFL2eKFcETpOideVer8igwlAA4OWI=";
+  const licenseKey = "MTc4ODIxMDAwMDAwMA==-cTpBN8sQsfgY2ZYWRIPOWlsFBEAKpoben68MpeQppwo=";
   console.log('License Key:', licenseKey);
   // Initialize Keyword Detector
   const threshold = 0.99;
@@ -46,10 +46,124 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, duration);
   }
   
-  // Usage  
+  // ---- Speech-to-text (Web Speech API) UI elements ----
+  const sttPanel = document.getElementById('sttPanel');
+  const sttHeading = document.getElementById('sttHeading');
+  const sttTranscriptEl = document.getElementById('sttTranscript');
+  const sttStopButton = document.getElementById('sttStopButton');
+  const sttLanguageSelect = document.getElementById('sttLanguage');
+  const sttLanguageCustom = document.getElementById('sttLanguageCustom');
+  const sttLanguageHint = document.getElementById('sttLanguageHint');
+  const sttUnsupportedNote = document.getElementById('sttUnsupportedNote');
+  const OTHER_LANGUAGE_VALUE = '__other__';
+
+  // Tracks whether the browser supports the Web Speech API. Set once
+  // keywordDetector.enableSpeechToText() has been called (see bindSpeechToText
+  // below). When false, onKeywordDetected falls back to the original
+  // behavior (manual stop/start listening cycle, no STT).
+  let sttSupported = false;
+
+  // Accumulates final transcripts across the whole STT session - the browser
+  // ends a SpeechRecognition session after every utterance/pause on its own,
+  // and the library auto-restarts transparently until Stop is pressed, so a
+  // single session can produce several onResult calls.
+  let sttSessionTranscript = '';
+
+  function showSttPanel() {
+    sttHeading.textContent = 'Listening for command… (press Stop when done)';
+    sttSessionTranscript = '';
+    sttTranscriptEl.textContent = '';
+    sttPanel.style.display = 'block';
+  }
+
+  function hideSttPanel() {
+    sttPanel.style.display = 'none';
+  }
+
+  // (Re)binds speech-to-text to the given language. Safe to call again (e.g.
+  // when the user changes the language dropdown) - it just rebinds the
+  // wrapper's internal SpeechToText instance.
+  function bindSpeechToText(lang) {
+    sttSupported = keywordDetector.enableSpeechToText({
+      lang,
+      onStart: () => {
+        showSttPanel();
+      },
+      onInterimResult: (transcript) => {
+        sttTranscriptEl.textContent = (sttSessionTranscript + ' ' + transcript).trim();
+      },
+      onResult: (transcript) => {
+        sttSessionTranscript = (sttSessionTranscript + ' ' + transcript).trim();
+        sttTranscriptEl.textContent = sttSessionTranscript;
+        console.log('STT transcript so far:', sttSessionTranscript);
+      },
+      onError: (error) => {
+        // Non-fatal errors (e.g. "no-speech" during a pause) get auto-retried
+        // by the library and don't end the session - just log them. Fatal
+        // ones are immediately followed by onEnd, which hides the panel.
+        console.warn('STT error:', error);
+      },
+      onEnd: () => {
+        hideSttPanel();
+        statusElement.textContent = 'Listening for keywords...';
+      },
+    });
+
+    sttLanguageSelect.disabled = !sttSupported;
+    sttLanguageCustom.disabled = !sttSupported;
+    sttUnsupportedNote.style.display = sttSupported ? 'none' : 'inline';
+    return sttSupported;
+  }
+
+  sttStopButton.addEventListener('click', () => {
+    // Stops only the current session - speech-to-text stays enabled for the
+    // next wake-word detection, and onEnd (above) resumes wake-word listening.
+    keywordDetector.stopSpeechToText();
+  });
+
+  // There is no browser API to enumerate which languages SpeechRecognition
+  // actually supports (unlike speechSynthesis.getVoices() for TTS) - the
+  // dropdown above is just a curated set of common ones. "Other..." reveals
+  // a free-text BCP-47 input so any language can be tried; if the engine
+  // doesn't support it, onError (in bindSpeechToText) surfaces that.
+  sttLanguageSelect.addEventListener('change', () => {
+    if (sttLanguageSelect.value === OTHER_LANGUAGE_VALUE) {
+      sttLanguageCustom.style.display = 'inline-block';
+      sttLanguageHint.style.display = 'block';
+      sttLanguageCustom.focus();
+      return;
+    }
+    sttLanguageCustom.style.display = 'none';
+    sttLanguageHint.style.display = 'none';
+    keywordDetector.stopSpeechToText();
+    bindSpeechToText(sttLanguageSelect.value);
+  });
+
+  function applyCustomLanguage() {
+    const lang = sttLanguageCustom.value.trim();
+    if (!lang) return;
+    keywordDetector.stopSpeechToText();
+    bindSpeechToText(lang);
+  }
+
+  sttLanguageCustom.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyCustomLanguage();
+    }
+  });
+  sttLanguageCustom.addEventListener('blur', applyCustomLanguage);
+
+  // Usage
   const onKeywordDetected = async (detected) => {
       if (detected) {
-        await keywordDetector.stopListening();
+        // When STT is supported, the library itself pauses wake-word
+        // listening, runs speech-to-text (see bindSpeechToText above), and
+        // resumes listening automatically once transcription ends - so skip
+        // the manual stop/start cycle below in that case.
+        if (!sttSupported) {
+          await keywordDetector.stopListening();
+        }
 
         console.log('Keyword detected \nprediction: ' + detected.prediction);
         console.log('cntBuf: ' + detected.cntBuf);
@@ -57,7 +171,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 //        alert("Keyword detected: " + detected.model);
         showAutoClosingAlert("Keyword detected: " + detected.model, 5000);
 
-        await keywordDetector.startListening();
+        if (!sttSupported) {
+          await keywordDetector.startListening();
+        }
       }
     };
     const modelsFolderPath = "./models"
@@ -110,9 +226,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       modelParamsArr, 
       /* Provide a link to the wasm file location in your app */
       "https://127.0.0.1:8080/dist/",
-      /* Provide a link to the audio-worklet-processor.js file location in your app */ 
+      /* Provide a link to the audio-worklet-processor.js file location in your app */
       "./dist/");
-  
+
+    // STT hidden for now - wake word detection only. sttSupported stays false,
+    // so onKeywordDetected's existing !sttSupported fallback (manual
+    // stopListening/startListening cycle) runs, same as before STT existed.
+    // To re-enable: uncomment the line below and the STT UI in index.html.
+    // bindSpeechToText(sttLanguageSelect.value);
+
     const isLicensed = await keywordDetector.setLicense(licenseKey);
     if (!isLicensed) {
       alert('Invalid or expired license key.');
