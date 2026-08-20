@@ -1,44 +1,189 @@
-# Web Wake Word Detection / Keywords Detection by Davoice
+# Web Wake Word Detection — Wake Word & Keyword Spotting for JavaScript
 
 [![GitHub release](https://img.shields.io/github/release/frymanofer/KeyWordDetectionIOSFramework.svg)](https://github.com/frymanofer/KeyWordDetectionIOSFramework/releases)
+[![npm](https://img.shields.io/npm/v/web-wake-word-cpu-gpu-opt.svg)](https://www.npmjs.com/package/web-wake-word-cpu-gpu-opt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-
-By [DaVoice.io](https://davoice.io) email: ofer@davoice.io
-
 [![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2FDaVoiceAI)](https://twitter.com/DaVoiceAI)
 
+By [DaVoice.io](https://davoice.io) — email: ofer@davoice.io
 
-Welcome to **Davoice Wake Words** – the premier Wake Words / keyword detection solution designed by **DaVoice.io**.
+**Davoice Web Wake Word** is a JavaScript wake word detection / keyword
+spotting library that runs **entirely in the browser** — no audio is ever
+sent to a server. It works with **any web stack**: plain JavaScript,
+React, Next.js, Vue.js, Nuxt.js, Angular, Svelte/SvelteKit, Gatsby,
+Ember.js, Backbone.js, and Mithril.js.
 
-## New
+A **wake word** (also called **keyword detection**, **phrase spotting**,
+**phrase recognition**, **hotword detection**, or **trigger word
+detection**) is the short phrase that activates an app or device —
+think "Hey Siri" or "OK Google", but for your own product with your own
+custom word or phrase.
 
-Chaned the main example to support GPU and CPU optimization.
+---
 
-## About this project
+## Table of contents
 
-This is a **"wake word"** package for React.js, Javascript, Angular, Vue.js, Svelte, Next.js, Nuxt.js, Gatsby, Ember.js, Backbone.js and Mithril.js. A wake word is a keyword that activates your device, like "Hey Siri" or "OK Google". "Wake Word" is also known as "keyword detection", "Phrase Recognition", "Phrase Spotting", “Voice triggered”, “hotword”, “trigger word”
+- [What is a wake word?](#what-is-a-wake-word)
+- [Why DaVoice Web Wake Word](#why-davoice-web-wake-word)
+- [Supported web frameworks](#supported-web-frameworks)
+- [Quick start](#quick-start)
+- [Integrating into your own app](#integrating-into-your-own-app)
+- [Speech to Intent](#speech-to-intent)
+- [Creating a custom wake word](#creating-a-custom-wake-word)
+- [Benchmarks](#benchmarks)
+- [FAQ](#faq)
+- [Wake word detection on other platforms](#wake-word-detection-on-other-platforms)
+- [Links](#links)
 
-It also provide **Speech to Intent**. **Speech to Intent** refers to the ability to recognize a spoken word or phrase
-and directly associate it with a specific action or operation within an application. Unlike a **"wake word"**, which typically serves to activate or wake up the application,
-Speech to Intent goes further by enabling complex interactions and functionalities based on the recognized intent behind the speech.
+---
 
-For example, a wake word like "Hey App" might activate the application, while Speech
-to Intent could process a phrase like "Play my favorite song" or "Order a coffee" to
-execute corresponding tasks within the app.
-Speech to Intent is often triggered after a wake word activates the app, making it a key
-component of more advanced voice-controlled applications. This layered approach allows for
-seamless and intuitive voice-driven user experiences.
+## What is a wake word?
 
-## Features
+A **wake word** (or **wakeword**) is a short spoken phrase a device or app
+continuously listens for, in order to trigger an action — without sending
+raw audio anywhere or requiring the user to press a button. It's the same
+category of technology behind "Hey Siri", "OK Google", and "Alexa", except
+here it runs **on-device, inside a web page**, using your own custom word
+or phrase instead of a generic assistant name.
 
-- **High Accuracy:** We have succesfully reached over 99% accurary for all our models. **Here is on of our customer's benchmarks**:
+Wake word detection is different from full **speech-to-text**: a
+wake-word model only recognizes one thing — whether its specific
+phrase was just said — which is what makes it lightweight enough to run
+continuously in a browser tab. Once triggered, you can optionally hand
+off to full speech recognition for more complex commands (see
+[Speech to Intent](#speech-to-intent) below).
+
+## Why DaVoice Web Wake Word
+
+- **Runs 100% client-side** — audio never leaves the browser; nothing to
+  host, no server-side inference, no privacy/compliance exposure.
+- **Framework-agnostic** — works with React, Next.js, Vue, Nuxt, Angular,
+  Svelte/SvelteKit, or plain JS/webpack/Vite. See the
+  [example app's README](example/README.md) for a framework-by-framework
+  integration guide.
+- **CPU/GPU-optimized** — an ONNX runtime compiled to WebAssembly, tuned
+  for both CPU and GPU execution paths.
+- **High accuracy** — see [Benchmarks](#benchmarks) below.
+- **Low latency** — near-instantaneous keyword detection, suitable for
+  always-listening UX.
+- **Custom wake words** — send us your phrase and we generate the model
+  ([details](#creating-a-custom-wake-word)).
+- **Optional Speech to Intent** — layer full voice-command recognition on
+  top of the wake word trigger.
+
+## Supported web frameworks
+
+The underlying npm package, `web-wake-word-cpu-gpu-opt`, ships plain
+browser assets (a Web Worker, an AudioWorklet module, and a WASM ONNX
+runtime), so it drops into any JavaScript framework. The
+[example app's README](example/README.md#4-framework-specific-integration-notes)
+has copy-pasteable, framework-specific setup steps for:
+
+| Framework | Notes |
+|---|---|
+| React / Create React App | client-only hook (`useEffect`), assets in `public/` |
+| Next.js | `"use client"` (App Router) or `dynamic(..., { ssr: false })` (Pages Router) |
+| Vue.js (Vue CLI / Vite) | assets in `public/`, instantiate in `onMounted()` |
+| Angular | `angular.json` asset globs, guarded with `isPlatformBrowser` |
+| Svelte / SvelteKit | assets in `static/`, guarded with the `browser` flag |
+| Nuxt.js, Gatsby, Ember.js, Backbone.js, Mithril.js, plain JS | same static-asset + client-only-execution pattern |
+
+## Quick start
+
+Try the included example app locally:
+
+```bash
+cd example
+npm install
+npm run gen-cert     # local HTTPS cert (mic access requires a secure context)
+npm run build
+npm start             # https://127.0.0.1:8080
+```
+
+Open the printed HTTPS URL, allow microphone access, and say the demo
+wake word. Full details, architecture notes, and troubleshooting are in
+[`example/README.md`](example/README.md).
+
+## Integrating into your own app
+
+Install the package:
+
+```bash
+npm install web-wake-word-cpu-gpu-opt@latest
+```
+
+Copy the required runtime assets (models + worker + worklet + WASM
+runtime) into your app's public/static folder, then use it like this:
+
+```js
+import { KeywordDetector } from 'web-wake-word-cpu-gpu-opt';
+
+const modelParamsArr = [
+  {
+    modelToUse: 'hey_lookdeep.onnx',
+    threshold: 0.99,
+    bufferCount: 3,
+    onKeywordDetected: async (detected) => {
+      console.log('Keyword detected:', detected.model, detected.prediction);
+    },
+  },
+];
+
+const keywordDetector = new KeywordDetector(
+  './models',                        // modelsFolderPath
+  modelParamsArr,                    // model configuration
+  `${window.location.origin}/dist/`, // wasmBasePath — must be an absolute URL
+  './dist/'                          // audioWorkletPath
+);
+
+const isLicensed = await keywordDetector.setLicense(licenseKey);
+if (!isLicensed) throw new Error('Invalid or expired license key.');
+
+await keywordDetector.init();
+await keywordDetector.startListening();
+```
+
+**This is the short version.** For the full picture — exactly which
+files to copy from `node_modules`, why `wasmBasePath` must be an absolute
+URL, per-framework setup for React/Next.js/Vue/Angular/Svelte, and a
+troubleshooting section — see
+**[`example/README.md`](example/README.md)**, which is kept as the
+canonical integration guide for this package.
+
+License keys are issued by [DaVoice.io](https://davoice.io) — contact
+ofer@davoice.io to get one.
+
+## Speech to Intent
+
+**Speech to Intent** goes a step further than a wake word: instead of
+just activating the app, it recognizes a full spoken phrase and maps it
+directly to an action. A wake word like "Hey App" might activate
+listening, while Speech to Intent then interprets "play my favorite
+song" or "order a coffee" and triggers the corresponding feature. This
+layered wake-word → intent pattern is how most production voice-driven
+UX is built. Contact us at ofer@davoice.io to discuss enabling it for
+your app.
+
+## Creating a custom wake word
+
+1. **Request a model** — email ofer@davoice.io (or info@davoice.io) with
+   the wake word phrase(s) you want, e.g. `"hey sky"`. We send back the
+   corresponding model, e.g. `hey_sky.onnx`.
+2. **Add it to your project** — copy the new `.onnx` file into your
+   `models/` folder (make sure that folder is copied to your build
+   output, same as the other model files).
+3. **Reference it in code** — add it to `modelParamsArr`:
+   ```js
+   { modelToUse: "hey_sky.onnx", threshold: 0.99, bufferCount: 3, onKeywordDetected }
+   ```
+
+## Benchmarks
+
+We've reached over 99% accuracy across our wake word models. From one
+customer's independent benchmark, run against **1,326 true-positive
+recordings**:
 
 ```
-** Benmark used recordings with 1326 TP files.
-** Second best was on of the industry top players who detected 1160 TP 
-** Third  detected TP 831 out of 1326
-
 MODEL         DETECTION RATE
 ===========================
 DaVoice        0.992458
@@ -46,250 +191,72 @@ Top Player     0.874811
 Third          0.626697
 ```
 
-- **Platforms:** Web, JS, Angular, React etc'
-- **Easy to deploy:** Check out our example to enabled your web app.
-- **Low Latency:** Experience near-instantaneous keyword detection.
+"Top Player" was one of the industry's leading providers (1,160/1,326
+detected); "Third" detected 831/1,326.
 
-## Contact
+## FAQ
 
-For any questions, requirements, or more support for React-Native, please contact us at ofer@davoice.io.
+**What is a wake word / keyword detection?**
+A short phrase (e.g. "Hey App") that a lightweight on-device model
+continuously listens for, to trigger an action — the same category as
+"Hey Siri" or "OK Google", but customizable and embeddable in your own
+web app.
 
-## Installation and Usage
+**Does this send audio to a server?**
+No. Detection runs fully client-side in the browser via WebAssembly; no
+audio or recordings leave the device.
 
-# Example
-cd example
+**Which web frameworks does this support?**
+Any of them — React, Next.js, Vue.js, Nuxt.js, Angular, Svelte/SvelteKit,
+Gatsby, Ember.js, Backbone.js, Mithril.js, or plain JavaScript. See
+[Supported web frameworks](#supported-web-frameworks).
 
-npm install
+**How is this different from speech-to-text?**
+Wake word detection recognizes one specific phrase and is lightweight
+enough to run continuously; speech-to-text transcribes arbitrary speech
+and is heavier. Combine both — see [Speech to Intent](#speech-to-intent).
 
-npm run build
+**Can I use my own custom wake word?**
+Yes — see [Creating a custom wake word](#creating-a-custom-wake-word).
 
-# Test it in a browser:
-You can run use https server to test the wake words.
+**Is a license required?**
+Yes, a license key from [DaVoice.io](https://davoice.io) is required at
+runtime (`setLicense()`). Contact ofer@davoice.io.
 
-Here is an example:
+**Do you support mobile apps too?**
+Yes — see [Wake word detection on other platforms](#wake-word-detection-on-other-platforms)
+for iOS, Android, React Native, Flutter, and Python.
 
-npm install -g http-server
+## Wake word detection on other platforms
 
-http-server . -p 8080 --ssl --cert cert.pem --key key.pem
+DaVoice also ships wake word / keyword detection for:
 
-or "npm run start"
+- **Python:** [Python_WakeWordDetection](https://github.com/frymanofer/Python_WakeWordDetection)
+- **React Native:** [ReactNative_WakeWordDetection](https://github.com/frymanofer/ReactNative_WakeWordDetection) · [npm package](https://www.npmjs.com/package/react-native-wakeword)
+- **Flutter:** [Flutter_WakeWordDetection](https://github.com/frymanofer/Flutter_WakeWordDetection)
+- **Android:** [KeywordsDetectionAndroidLibrary](https://github.com/frymanofer/KeywordsDetectionAndroidLibrary)
+- **iOS:** [KeyWordDetectionIOSFramework](https://github.com/frymanofer/KeyWordDetectionIOSFramework) (React Native bridge) · [KeyWordDetection](https://github.com/frymanofer/KeyWordDetection) (standalone framework)
 
-## If you do not have cert.pem and/or key.pem: you can create them as follow:
-
-nopenssl genrsa -out key.pem 2048
-
-nopenssl req -new -key key.pem -out csr.pem
-
-nopenssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
-
-# Integrating to your app:
-
-## Add web-wake-word-cpu-gpu-opt to your app.
-npm install web-wake-word-cpu-gpu-opt@latest.
-or add to package.json the following where x,y,z is the version you can find in https://www.npmjs.com/package/web-wake-word-cpu-gpu-opt:
-```
- "web-wake-word-cpu-gpu-opt": "^x.y.z",
-```
-For example:
-```
- "web-wake-word-cpu-gpu-opt": "^2.0.8"
-```
-
-## Copy necessary files to your dist, public or other folder in your application:
-**YOU MUST COPY THE FOLLOWNG 3 FILES/FOLDERS to your app**
-- Copy the **models/** folder to your dist, public or other folder inside your app.
-- Copy **ort-wasm-simd-threaded.wasm** file from node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.wasm to your dist, public or other folder inside your app.
-- Copy **node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js** to your dist, public or other folder inside your app.
-
-## Add code to use it;
-
-Then you can add the follwing code or copy past parts that you need:
-
-```js
-import { KeywordDetector } from 'web-wake-word-cpu-gpu-opt';
-
-// Your code ....
-
-const modelsSuffix = '.onnx';
-  // ******** Check for the latest License *********
-  const licenseKey = "MTc1MjUyNjgwMDAwMA==-RbOr3R66OPByzZxLe7vgM6JDlrrejrgRzbo41+g8qrM=";
-  console.log('License Key:', licenseKey);
-  // Initialize Keyword Detector
-  const threshold = 0.99;
-  const bufferCount = 3;
-
-// Your code ....
-
-  // Setup the callback:
-  const onKeywordDetected = async (detected) => {
-      if (detected) {
-        await keywordDetector.stopListening();
-
-        console.log('Keyword detected \nprediction: ' + detected.prediction);
-        console.log('cntBuf: ' + detected.cntBuf);
-        console.log('Model: ' + detected.model);
-//        alert("Keyword detected: " + detected.model);
-        showAutoClosingAlert("Keyword detected: " + detected.model, 5000);
-
-        await keywordDetector.startListening();
-      }
-    };
-
-    // Provide the url to the models location. To be provided to KeywordDetector constructor
-    const modelsFolderPath = "./models"
-
-    // Configure the models to be used and their settings
-    const modelParamsArr = [
-      { modelToUse: "hey_lookdeep" + modelsSuffix, threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
-// More models to detect -  { modelToUse: "need_help_now"  + modelsSuffix, threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
-// Add more models      { modelToUse: "salut_mia_model_28_20012025"  + modelsSuffix, threshold: threshold, bufferCount: bufferCount, onKeywordDetected: onKeywordDetected },
-    ];
-
-    modelParamsArr.map(m => m.modelToUse.replace(/\.onnx$/, '').replace(/_/g, ' ')).join(', ');
-
-    /* KeywordDetector API:
-      KeywordDetector(modelsFolderPath, modelParams, wasmBasePath, 
-        audioWorkletPath);
-
-      modelsFolderPath - path to the models directory.
-      modelParams - the models to use and their configuration
-      wasmBasePath - the location of wasm file
-      audioWorkletPath - the location of audioWorklet
-
-      You will need to copy ort-wasm-simd-threaded.wasm to your dist or somewhere in your project and add its location to the KeywordDetector initialization.
-      The file is found in the dist folder: "node_modules/web-wake-word-cpu-gpu-opt/dist/ort-wasm-simd-threaded.wasm" in the example below we place it in 
-      https://127.0.0.1:8080/dist/
-      Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js"
-      You will also need to copy it and determine its location
-    */
-    const keywordDetector = new KeywordDetector(modelsFolderPath,
-       modelParamsArr, "https://127.0.0.1:8080/dist/", "./dist/"); // the two last arguments are the wasm location and audioWorkletPath location.
-
-    const isLicensed = await keywordDetector.setLicense(licenseKey);
-    if (!isLicensed) {
-      alert('Invalid or expired license key.');
-      return;
-    }
-   
-  try {
-    await keywordDetector.init();
-    statusElement.textContent = 'Models loaded. Listening for keywords...' + 
-    modelParamsArr.map(m => m.modelToUse.replace(/\.onnx$/, '').replace(/_/g, ' ')).join(', ');
-    
-    // Start listening for keywords
-    keywordDetector.startListening();
-  } catch (error) {
-    console.error('Initialization error:', error);
-    statusElement.textContent = 'Error initializing keyword detector.';
-  }
-});
-```
-# Using specific path to wasm file:
-
-If you need to the wasm file path, you can add another variable to KeywordDetector constructor.
-
-Below is an example of adding path to chrome extension path:
-
-```
-const keywordDetector = new KeywordDetector(
-  modelsPath,
-  'model.onnx',
-  threshold,
-  bufferCount,
-  onKeywordDetected,
-  'chrome-extension://<EXT_ID>/assets/wasm/'
-);
-```
-
-### Next steps
-Open a browser with the following URL https://192.168.1.218:8080 <br>
-See that it is working for you.<br>
-Integrate it to your life website/app.<br>
-
-# Wake word generator
-
-## Create your "custom wake word""
-
-In order to generate your custom wake word you will need to:
-
-- **Create wake word mode:**
-    Contact us at info@davoice.io with a list of your desired **"custom wake words"**.
-
-    We will send you corresponding models typically your **wake word phrase .onnx** for example:
-
-    A wake word ***"hey sky"** will correspond to **hey_sky.onnx**.
-
-- **Add wake words to javascript project:**
-    Simply copy the new onnx files to models directory make sure this directory it copied to the targer such as "dist/model".
-
-- **In JS code add the new onnx files to your configuration**
-In example.js change
-```
-    const modelToUse = "need_help_now.onnx";
-```
-
-To
-
-```
-    const modelToUse = "hey_sky.onnx"; // or your_model.onnx
-```
-
-## Contact us
-If you need any help contact us: ofer@davoice.io
-
-
-### Key words
-
-DaVoice.io javascript "Voice commands" "Wake words" "Voice to Intent" "keyword detection".
-"Wake word detection github"
-"Wake Word" 
-"keyword detection"
-"Phrase Recognition"
-"Phrase Spotting"
-“Voice triggered”
-“hotword”
-“trigger word”
-"react.js wake word",
-"Angular wake word",
-"js wake word",
-"javascript wake word",
-"angular wake word",
-"Vue.js wake word",
-"Wake word detection github",
-"Wake word generator",
-"Custom wake word",
-"voice commands",
-"wake word",
-"wakeword",
-"wake words",
-"keyword detection",
-"keyword spotting",
-"speech to intent",
-"voice to intent",
-"phrase spotting",
-"react native wake word",
-"Davoice.io wake word",
-"Davoice wake word",
-"Davoice react native wake word",
-"Davoice react-native wake word",
-"wake",
-"word",
-"Voice Commands Recognition",
-"lightweight Voice Commands Recognition",
-"customized lightweight Voice Commands Recognition",
+For React-Native specific requirements or support, contact
+ofer@davoice.io.
 
 ## Links
 
-- **Web / Javascript / React.JS / Angula / Vue.js Wake Word npm package:** https://www.npmjs.com/package/web-wake-word-cpu-gpu-opt
-- **If you need React-Native wake word: ** https://www.npmjs.com/package/react-native-wakeword
+- **Website:** [https://davoice.io](https://davoice.io)
+- **Web / JavaScript npm package:** [web-wake-word-cpu-gpu-opt](https://www.npmjs.com/package/web-wake-word-cpu-gpu-opt)
+- **This repo:** [Web_WakeWordDetection](https://github.com/frymanofer/Web_WakeWordDetection)
+- **Twitter / X:** [@DaVoiceAI](https://twitter.com/DaVoiceAI)
+- **Contact:** ofer@davoice.io
 
-Here are wakeword detection GitHub links per platform:
+---
 
-- **For Python:** https://github.com/frymanofer/Python_WakeWordDetection
-- **Web / JS / Angular / React:** https://github.com/frymanofer/Web_WakeWordDetection/tree/main
-- **For React Native:** [ReactNative_WakeWordDetection](https://github.com/frymanofer/ReactNative_WakeWordDetection)
-- **For Flutter:** [https://github.com/frymanofer/Flutter_WakeWordDetection]
-- **For Android:** [KeywordsDetectionAndroidLibrary](https://github.com/frymanofer/KeywordsDetectionAndroidLibrary)
-- **For iOS framework:** 
-  - With React Native bridge: [KeyWordDetectionIOSFramework](https://github.com/frymanofer/KeyWordDetectionIOSFramework)
-  - Sole Framework: [KeyWordDetection](https://github.com/frymanofer/KeyWordDetection)
+### Keywords
+
+DaVoice.io JavaScript wake word, voice commands, wake words, voice to
+intent, keyword detection, keyword spotting, phrase recognition, phrase
+spotting, voice triggered, hotword, trigger word, wake word detection
+GitHub, wake word generator, custom wake word — for React.js, Next.js,
+Angular, Vue.js, Nuxt.js, Svelte, Gatsby, Ember.js, Backbone.js,
+Mithril.js, and plain JavaScript. Also: React Native wake word, Davoice
+react-native wake word, lightweight voice commands recognition,
+customized lightweight voice commands recognition.
