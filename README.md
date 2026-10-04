@@ -28,6 +28,7 @@ custom word or phrase.
 - [Supported web frameworks](#supported-web-frameworks)
 - [Quick start](#quick-start)
 - [Integrating into your own app](#integrating-into-your-own-app)
+- [Health monitoring](#health-monitoring)
 - [Speech to Intent](#speech-to-intent)
 - [Creating a custom wake word](#creating-a-custom-wake-word)
 - [Benchmarks](#benchmarks)
@@ -68,6 +69,9 @@ off to full speech recognition for more complex commands (see
   always-listening UX.
 - **Custom wake words** — send us your phrase and we generate the model
   ([details](#creating-a-custom-wake-word)).
+- **Health monitoring API** — `getHealth()` reports whether the detector
+  is listening, whether audio is flowing, and whether wake-word predictions
+  are being produced ([details](#health-monitoring)).
 - **Optional Speech to Intent** — layer full voice-command recognition on
   top of the wake word trigger.
 
@@ -152,6 +156,57 @@ canonical integration guide for this package.
 
 License keys are issued by [DaVoice.io](https://davoice.io) — contact
 ofer@davoice.io to get one.
+
+## Health monitoring
+
+Available since npm version **2.0.12**. Call `getHealth()` at any time
+after the detector has been constructed to get a snapshot of its runtime
+state. Use it for dashboards, logging, or automatic recovery. Fully typed
+in TypeScript as `KeywordDetectorHealth`.
+
+```js
+const health = await keywordDetector.getHealth();
+
+if (!health.activated)             console.warn('Detector is not listening');
+if (!health.audio.isReceiving)     console.warn('No audio frames in the last 2.5s');
+if (!health.wakeWord.isProcessing) console.warn('No wake-word predictions in the last 5s');
+if (health.lastError)              console.error('Last error:', health.lastError.message, health.lastError.at);
+```
+
+For continuous monitoring, poll it on an interval and alert when audio or
+predictions stop flowing while the detector is supposed to be active:
+
+```js
+setInterval(async () => {
+  const h = await keywordDetector.getHealth();
+  if (h.activated && (!h.audio.isReceiving || !h.wakeWord.isProcessing)) {
+    reportUnhealthy(h); // your monitoring / recovery hook
+  }
+}, 10000);
+```
+
+### Returned fields
+
+| Field | Type | Meaning |
+|---|---|---|
+| `activated` / `listening` | `boolean` | Detector is actively listening (`startListening()` was called and not stopped). |
+| `initialized` | `boolean` | `init()` completed successfully. |
+| `licensed` | `boolean` | `setLicense()` succeeded. |
+| `audio.isReceiving` | `boolean` | An audio frame arrived within the last 2.5 seconds while activated. |
+| `audio.lastReceivedAt` | `string \| null` | ISO timestamp of the last audio frame. |
+| `audio.msSinceLastReceived` | `number \| null` | Milliseconds since the last audio frame. |
+| `audio.framesReceived` / `audio.samplesReceived` | `number` | Running counters of audio frames / samples processed. |
+| `wakeWord.isProcessing` | `boolean` | A wake-word prediction was produced within the last 5 seconds while activated. |
+| `wakeWord.lastPredictionAt` | `string \| null` | ISO timestamp of the last prediction. |
+| `wakeWord.msSinceLastPrediction` | `number \| null` | Milliseconds since the last prediction. |
+| `wakeWord.predictionsCalculated` | `number` | Total predictions computed. |
+| `wakeWord.lastPrediction` | `object \| null` | Latest score snapshot: `model`, `score`, `threshold`, `fakeThreshold`, `aboveThreshold`, `consecutiveMatches`, `at`. |
+| `wakeWord.lastKeywordDetectedAt` | `string \| null` | ISO timestamp of the last wake-word detection. |
+| `wakeWord.detections` | `number` | Total wake-word detections. |
+| `lastError` | `{ message, at } \| null` | Most recent runtime error observed by the detector, if any. |
+
+Counters and timestamps reset each time a new `KeywordDetector` is
+created.
 
 ## Speech to Intent
 

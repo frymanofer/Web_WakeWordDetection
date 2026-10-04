@@ -84,7 +84,9 @@ A single-model constructor overload also exists
 — see `example.js` for both forms (the single-model one is commented out).
 
 Other instance methods available: `stopListening()`, `getHealth()` (returns
-a diagnostics snapshot — useful when debugging mic/model issues), and
+a diagnostics snapshot — useful for production monitoring and when debugging
+mic/model issues; see [Health monitoring](../README.md#health-monitoring)
+for the full field reference), and
 optionally `enableSpeechToText(opts)` / `stopSpeechToText()` /
 `disableSpeechToText()` if you want to run the browser's native
 `SpeechRecognition` API after a wake word fires (wired up but hidden by
