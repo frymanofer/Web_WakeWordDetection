@@ -1,5 +1,7 @@
 # Web Wake Word Detection — Wake Word & Keyword Spotting for JavaScript
 
+[License](LICENSE) · [Model and Voice Asset Notice](MODEL_NOTICES.md)
+
 [![GitHub release](https://img.shields.io/github/release/frymanofer/KeyWordDetectionIOSFramework.svg)](https://github.com/frymanofer/KeyWordDetectionIOSFramework/releases)
 [![npm](https://img.shields.io/npm/v/web-wake-word-cpu-gpu-opt.svg)](https://www.npmjs.com/package/web-wake-word-cpu-gpu-opt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
