@@ -82,7 +82,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ttsProgressRow = document.getElementById('ttsProgressRow');
   const ttsProgressBar = document.getElementById('ttsProgressBar');
   const ttsProgressLabel = document.getElementById('ttsProgressLabel');
+  const ttsModelHeading = document.getElementById('ttsModelHeading');
+  const ttsModelGate = document.getElementById('ttsModelGate');
   const ttsUseModelSection = document.getElementById('ttsUseModelSection');
+  const ttsCloneVoiceGroup = document.getElementById('ttsCloneVoiceGroup');
+  const ttsCloneVoiceRow = document.getElementById('ttsCloneVoiceRow');
   const ttsHdVoiceGroup = document.getElementById('ttsHdVoiceGroup');
   const ttsHdVoiceRow = document.getElementById('ttsHdVoiceRow');
   const ttsLdVoiceGroup = document.getElementById('ttsLdVoiceGroup');
@@ -93,14 +97,181 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ttsSpeakButton = document.getElementById('ttsSpeakButton');
   const ttsStopButton = document.getElementById('ttsStopButton');
   const ttsStatusEl = document.getElementById('ttsStatus');
+  const voiceCloneNameEl = document.getElementById('voiceCloneName');
+  const voiceCloneRecordButton = document.getElementById('voiceCloneRecordButton');
+  const voiceCloneStopButton = document.getElementById('voiceCloneStopButton');
+  const voiceCloneFileEl = document.getElementById('voiceCloneFile');
+  const voiceCloneCreateButton = document.getElementById('voiceCloneCreateButton');
+  const voiceCloneStatusEl = document.getElementById('voiceCloneStatus');
 
   let ttsInstance = null;
   let activeTtsVoice = null;
+  let voiceCloneRecorder = null;
+  let voiceCloneStream = null;
+  let voiceCloneChunks = [];
+  let voiceCloneAudio = null;
+  const temporaryVoiceClones = new Map();
+  const temporaryVoiceCloneFiles = new Set();
+  const TTS_EMBEDDER_URL = './models/tts/embedder_en.dm';
   const STUDIO_VOICE_ORDER = ['Rich', 'Ariana', 'Hanna'];
   const LIGHTWEIGHT_VOICE_ORDER = ['Matthew', 'Kate', 'Jenny', 'Gloria'];
 
   function formatBytes(n) {
     return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function updateVoiceCloneCreateButton() {
+    voiceCloneCreateButton.disabled = !ttsInstance ||
+      !voiceCloneNameEl.value.trim() || !voiceCloneAudio || !!voiceCloneRecorder;
+  }
+
+  function encodeWav(audioBuffer) {
+    const channelCount = Math.min(1, audioBuffer.numberOfChannels);
+    const samples = audioBuffer.getChannelData(0);
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const view = new DataView(buffer);
+    const writeString = (offset, value) => {
+      for (let i = 0; i < value.length; i += 1) view.setUint8(offset + i, value.charCodeAt(i));
+    };
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + samples.length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, channelCount, true);
+    view.setUint32(24, audioBuffer.sampleRate, true);
+    view.setUint32(28, audioBuffer.sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, samples.length * 2, true);
+    for (let i = 0; i < samples.length; i += 1) {
+      const sample = Math.max(-1, Math.min(1, samples[i]));
+      view.setInt16(44 + i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+    }
+    return new Blob([buffer], { type: 'audio/wav' });
+  }
+
+  async function convertRecordingToWav(blob) {
+    const audioContext = new AudioContext();
+    try {
+      const audioBuffer = await audioContext.decodeAudioData(await blob.arrayBuffer());
+      return encodeWav(audioBuffer);
+    } finally {
+      await audioContext.close();
+    }
+  }
+
+  async function startVoiceCloneRecording() {
+    if (!ttsInstance || voiceCloneRecorder) return;
+    try {
+      voiceCloneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm']
+        .find((type) => MediaRecorder.isTypeSupported(type));
+      voiceCloneRecorder = new MediaRecorder(voiceCloneStream, mimeType ? { mimeType } : undefined);
+      voiceCloneChunks = [];
+      voiceCloneRecorder.ondataavailable = (event) => {
+        if (event.data.size) voiceCloneChunks.push(event.data);
+      };
+      voiceCloneRecorder.onstop = async () => {
+        const recording = new Blob(voiceCloneChunks, { type: voiceCloneRecorder.mimeType || 'audio/webm' });
+        voiceCloneStream?.getTracks().forEach((track) => track.stop());
+        voiceCloneStream = null;
+        voiceCloneRecorder = null;
+        voiceCloneStopButton.disabled = true;
+        voiceCloneRecordButton.disabled = false;
+        voiceCloneStatusEl.textContent = 'Preparing your recording...';
+        try {
+          voiceCloneAudio = await convertRecordingToWav(recording);
+          voiceCloneStatusEl.textContent = 'Recording ready. Choose a name and create the temporary clone.';
+        } catch (error) {
+          voiceCloneAudio = null;
+          voiceCloneStatusEl.textContent = `Could not read the recording: ${error.message || error}`;
+        }
+        updateVoiceCloneCreateButton();
+      };
+      voiceCloneRecorder.start();
+      voiceCloneRecordButton.disabled = true;
+      voiceCloneStopButton.disabled = false;
+      voiceCloneStatusEl.textContent = 'Recording... speak naturally for about 10 seconds.';
+      updateVoiceCloneCreateButton();
+    } catch (error) {
+      voiceCloneStatusEl.textContent = `Microphone access failed: ${error.message || error}`;
+    }
+  }
+
+  function stopVoiceCloneRecording() {
+    if (voiceCloneRecorder && voiceCloneRecorder.state !== 'inactive') voiceCloneRecorder.stop();
+  }
+
+  async function createTemporaryVoiceClone() {
+    if (!ttsInstance || !voiceCloneAudio) return;
+    const name = voiceCloneNameEl.value.trim();
+    if (!/^[A-Za-z0-9][A-Za-z0-9 -]{0,29}$/.test(name)) {
+      voiceCloneStatusEl.textContent = 'Use a voice name with letters, digits, spaces, or dashes.';
+      return;
+    }
+    if (temporaryVoiceClones.has(name.toLowerCase())) {
+      voiceCloneStatusEl.textContent = 'That temporary voice name already exists. Choose another name.';
+      return;
+    }
+    voiceCloneCreateButton.disabled = true;
+    voiceCloneStatusEl.textContent = 'Creating temporary voice clone...';
+    try {
+      const input = new File([voiceCloneAudio], `${name}.wav`, { type: 'audio/wav' });
+      // The web package only exposes newly-created voices through its external
+      // voices folder. Use OPFS as a short-lived staging area, import the
+      // embedding into the active WASM engine. Files remain only for this page
+      // session so the package can expose every clone in the selector.
+      await ensureTemporaryVoiceCloneDirectory();
+      await ttsInstance.setExternalVoicesPath('voices');
+      await removeTemporaryVoiceCloneFile(name);
+      const temporaryVoiceClone = await ttsInstance.createVoiceClone(
+        input,
+        `voices/${name}.emd`,
+        TTS_EMBEDDER_URL,
+      );
+      await ttsInstance.setExternalVoicesPath('voices');
+      const selected = await ttsInstance.setVoice(temporaryVoiceClone.voice);
+      if (!selected) throw new Error('The temporary voice was created but could not be selected.');
+      temporaryVoiceClones.set(temporaryVoiceClone.voice.toLowerCase(), temporaryVoiceClone);
+      temporaryVoiceCloneFiles.add(temporaryVoiceClone.voice);
+      const cloneRadio = addUseModelOption(temporaryVoiceClone.voice, ttsCloneVoiceRow);
+      ttsCloneVoiceGroup.style.display = 'block';
+      ttsUseModelSection.style.display = 'block';
+      await selectTtsVoice(temporaryVoiceClone.voice, cloneRadio);
+      ttsSpeakButton.disabled = false;
+      voiceCloneStatusEl.textContent = `${temporaryVoiceClone.voice} is ready for this session only.`;
+      ttsStatusEl.textContent = `${temporaryVoiceClone.voice} in use.`;
+    } catch (error) {
+      voiceCloneStatusEl.textContent = `Voice clone failed: ${error.message || error}`;
+      updateVoiceCloneCreateButton();
+    }
+  }
+
+  async function removeTemporaryVoiceCloneFile(name) {
+    try {
+      const opfsRoot = await navigator.storage.getDirectory();
+      const voicesDirectory = await opfsRoot.getDirectoryHandle('voices', { create: false });
+      await voicesDirectory.removeEntry(`${name}.emd`);
+    } catch (error) {
+      // Missing OPFS entries are fine; a cleanup failure is surfaced to the user.
+      if (error?.name !== 'NotFoundError') throw error;
+    }
+  }
+
+  async function ensureTemporaryVoiceCloneDirectory() {
+    const opfsRoot = await navigator.storage.getDirectory();
+    await opfsRoot.getDirectoryHandle('voices', { create: true });
+  }
+
+  async function cleanupTemporaryVoiceClones() {
+    for (const voiceName of temporaryVoiceCloneFiles) {
+      await removeTemporaryVoiceCloneFile(voiceName).catch(() => undefined);
+    }
+    temporaryVoiceCloneFiles.clear();
+    temporaryVoiceClones.clear();
   }
 
   async function selectTtsVoice(voiceName, selectedRadio = null) {
@@ -132,6 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     label.appendChild(radio);
     label.appendChild(document.createTextNode(voiceName));
     row.appendChild(label);
+    return radio;
   }
 
   async function loadTtsModel() {
@@ -142,6 +314,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     ttsProgressBar.style.width = '0%';
     ttsProgressLabel.textContent = 'Downloading multi-speakers model...';
     ttsStatusEl.textContent = 'Loading multi-speakers model...';
+    ttsModelHeading.textContent = 'Loading multi-speakers model...';
+    ttsModelGate.textContent = 'Loading the multi-speakers model. The controls will unlock when it is ready.';
 
     try {
       const { TextToSpeech } = await loadDaVoicePackage();
@@ -193,12 +367,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         ttsRichVoiceRow.querySelector('input[type="radio"]') || null,
       );
       ttsProgressRow.style.display = 'none';
-      ttsLoadButton.textContent = 'Multi-speakers model ✓ (loaded)';
+      ttsLoadButton.style.display = 'none';
+      ttsModelHeading.textContent = 'Loaded multi-speakers model';
+      ttsModelGate.style.display = 'none';
+      ttsTextEl.disabled = false;
+      document.querySelectorAll('.tts-style-example').forEach((button) => { button.disabled = false; });
+      voiceCloneRecordButton.disabled = false;
+      voiceCloneFileEl.disabled = false;
+      voiceCloneStatusEl.textContent = 'Record a sample or choose an audio file to create a temporary clone.';
     } catch (error) {
       console.error('TTS init error:', error);
       ttsProgressRow.style.display = 'none';
       ttsStatusEl.textContent = `Failed to load multi-speakers model: ${error.message || error}`;
       showAutoClosingAlert(`Failed to load multi-speakers model: ${error.message || error}`, 6000);
+      ttsModelGate.textContent = 'The model could not be loaded. Try loading it again.';
+      ttsLoadButton.textContent = 'Retry loading multi-speakers model';
+      ttsLoadButton.style.display = 'block';
       ttsLoadButton.disabled = false;
     }
   }
@@ -231,6 +415,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  voiceCloneNameEl.addEventListener('input', updateVoiceCloneCreateButton);
+  voiceCloneRecordButton.addEventListener('click', () => { void startVoiceCloneRecording(); });
+  voiceCloneStopButton.addEventListener('click', stopVoiceCloneRecording);
+  voiceCloneFileEl.addEventListener('change', () => {
+    const file = voiceCloneFileEl.files?.[0] || null;
+    voiceCloneAudio = file;
+    voiceCloneStatusEl.textContent = file
+      ? `${file.name} selected. Choose a name and create the temporary clone.`
+      : 'Record a sample or choose an audio file to create a temporary clone.';
+    updateVoiceCloneCreateButton();
+  });
+  voiceCloneCreateButton.addEventListener('click', () => { void createTemporaryVoiceClone(); });
+
   document.querySelectorAll('.tts-style-example').forEach((button) => {
     button.addEventListener('click', async () => {
       const example = button.dataset.example || '';
@@ -244,6 +441,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         ttsStatusEl.textContent = 'Example placed in the text box. Select it to copy.';
       }
     });
+  });
+
+  window.addEventListener('pagehide', () => {
+    voiceCloneStream?.getTracks().forEach((track) => track.stop());
+    voiceCloneStream = null;
+    voiceCloneChunks = [];
+    voiceCloneAudio = null;
+    void cleanupTemporaryVoiceClones();
+    ttsInstance?.stop();
+    ttsInstance?.destroy();
   });
 
   // Tracks whether the browser supports the Web Speech API. Set once
@@ -474,7 +681,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusElement.textContent = 'Loading wake word models...';
       await initializeWakeWordMode();
     } else {
-      ttsStatusEl.textContent = ttsInstance ? `${activeTtsVoice} in use.` : 'Load the multi-speakers model to begin.';
+      if (ttsInstance) {
+        ttsStatusEl.textContent = `${activeTtsVoice} in use.`;
+      } else {
+        ttsStatusEl.textContent = 'Preparing the multi-speakers model...';
+        await loadTtsModel();
+      }
     }
   }
 

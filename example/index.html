@@ -91,6 +91,7 @@
       background: #f4f1ff;
       outline: none;
     }
+    .tts-style-example:disabled { opacity: .45; cursor: default; background: #f3f4f7; }
     .tts-style-example code { display: block; white-space: normal; line-height: 1.45; }
     .tts-style-example small { display: block; margin-top: 4px; color: #766e91; }
     .contact-actions {
@@ -135,6 +136,17 @@
       background: linear-gradient(135deg, #3d5ab1, #6049b6);
       box-shadow: 0 9px 18px rgba(70, 102, 200, .28);
     }
+    .voice-clone-panel { margin-top: 18px; padding-top: 16px; border-top: 1px solid #edf0f6; }
+    .voice-clone-panel h3 { margin: 0 0 4px; font-size: 16px; }
+    .voice-clone-panel p { margin: 0 0 10px; color: #667085; font-size: 12px; line-height: 1.45; }
+    .voice-clone-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .voice-clone-controls input[type="text"] { min-width: 150px; flex: 1; padding: 9px 10px; border: 1px solid #dbe3f0; border-radius: 8px; font: inherit; }
+    .voice-clone-button { padding: 9px 12px; border: 1px solid #c9d4ea; border-radius: 8px; color: #4666c8; background: #f8faff; cursor: pointer; }
+    .voice-clone-button:hover:not(:disabled), .voice-clone-button:focus-visible { border-color: #8ba3eb; background: #eef3ff; outline: none; }
+    .voice-clone-button:disabled { opacity: .55; cursor: default; }
+    .voice-clone-status { margin-top: 8px; color: #667085; font-size: 12px; }
+    .voice-clone-file { max-width: 210px; font-size: 12px; }
+    .tts-model-gate { margin: 10px 0 12px; padding: 9px 11px; border-radius: 8px; color: #667085; background: #f2f4f8; font-size: 12px; }
     #status { margin: 0; padding: 14px 16px; border-radius: 12px; color: #40516d; background: #eef3ff; }
     button { font: inherit; }
     @media (max-width: 560px) {
@@ -160,7 +172,7 @@
         <button class="mode-button" data-mode="tts" type="button">
           <span class="mode-icon" aria-hidden="true">🔊</span>
           <strong>Text to speech</strong>
-          <span>Load the multi-speakers model and speak text with local voices.</span>
+          <span>Use the multi-speakers model and speak text with local voices.</span>
         </button>
       </div>
     </section>
@@ -231,9 +243,9 @@
       <button id="ttsBackButton" class="back-button" type="button">← Choose another test</button>
     </div>
 
-    <div style="font-size:13px; font-weight:bold; color:#444; margin-bottom:6px;">Load multi-speakers model</div>
+    <div id="ttsModelHeading" style="font-size:13px; font-weight:bold; color:#444; margin-bottom:6px;">Multi-speakers model</div>
     <div id="ttsVoiceRow" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-      <button id="ttsLoadButton" class="tts-load-button">Load multi-speakers model (135 MB)</button>
+      <button id="ttsLoadButton" class="tts-load-button" style="display:none;">Retry loading multi-speakers model</button>
     </div>
     <div id="ttsProgressRow" style="display:none; margin-bottom:12px;">
       <div style="background:#ddd; border-radius:4px; overflow:hidden; height:10px;">
@@ -241,24 +253,29 @@
       </div>
       <div id="ttsProgressLabel" style="font-size:12px; color:#666; margin-top:4px;"></div>
     </div>
+    <div id="ttsModelGate" class="tts-model-gate">Load the multi-speakers model to unlock voice selection, speech, examples, and voice cloning.</div>
 
     <!-- Filled with the voices embedded in the multi-speakers model. -->
     <div id="ttsUseModelSection" style="display:none; margin-bottom:12px; padding-top:12px; border-top:1px solid #ddd;">
       <div style="font-size:13px; font-weight:bold; color:#444; margin-bottom:6px;">Use model</div>
+      <div id="ttsCloneVoiceGroup" style="display:none; margin-bottom:12px;">
+        <div style="font-size:12px; font-weight:bold; color:#667085; margin-bottom:6px;">Temporary cloned voice</div>
+        <div id="ttsCloneVoiceRow" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
+      </div>
       <div id="ttsRichVoiceGroup" style="display:none; margin-bottom:12px;">
         <div style="font-size:12px; font-weight:bold; color:#667085; margin-bottom:6px;">Studio voices (with style emotions - experimental)</div>
         <div id="ttsRichVoiceRow" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
         <details class="tts-style-examples">
           <summary class="tts-style-examples-title">Examples — click to open, then click an example to copy it</summary>
-          <button class="tts-style-example" type="button" data-example="[whispering confidentially] Quiet, this is a secret! Do not tell anyone!">
+          <button class="tts-style-example" type="button" disabled data-example="[whispering confidentially] Quiet, this is a secret! Do not tell anyone!">
             <code>[whispering confidentially] Quiet, this is a secret! Do not tell anyone!</code>
             <small>Click to copy and use this example</small>
           </button>
-          <button class="tts-style-example" type="button" data-example="[happy mode enjoying life] What a funny joke! I could not stop laughing.">
+          <button class="tts-style-example" type="button" disabled data-example="[happy mode enjoying life] What a funny joke! I could not stop laughing.">
             <code>[happy mode enjoying life] What a funny joke! I could not stop laughing.</code>
             <small>Click to copy and use this example</small>
           </button>
-          <button class="tts-style-example" type="button" data-example="[drill sergeant] Get down and give me 50 push-ups!">
+          <button class="tts-style-example" type="button" disabled data-example="[drill sergeant] Get down and give me 50 push-ups!">
             <code>[drill sergeant] Get down and give me 50 push-ups!</code>
             <small>Click to copy and use this example</small>
           </button>
@@ -274,7 +291,7 @@
       </div>
     </div>
 
-    <textarea id="ttsText" rows="3" style="width:100%; box-sizing:border-box; font-size:14px; padding:6px;"
+    <textarea id="ttsText" rows="3" disabled style="width:100%; box-sizing:border-box; font-size:14px; padding:6px;"
       placeholder="Type text to speak once the model is loaded...">Hello, my name is Rich. I will record a new record today.</textarea>
     <div style="margin-top:8px; color:#667085; font-size:12px; line-height:1.5;">
       Rich experimental styles: add a bracket tag before text, for example
@@ -286,6 +303,19 @@
       <button id="ttsStopButton" disabled>Stop</button>
     </div>
     <div id="ttsStatus" style="font-size:13px; color:#666; margin-top:8px;">No voice loaded yet.</div>
+    <section class="voice-clone-panel" aria-labelledby="voiceCloneTitle">
+      <h3 id="voiceCloneTitle">Try a temporary voice clone</h3>
+      <p>Record about 10 seconds or choose an audio file. Each clone is available for this demo only, and all temporary files are deleted when you leave the page.</p>
+      <div class="voice-clone-controls">
+        <input id="voiceCloneName" type="text" maxlength="30" placeholder="Voice name" aria-label="Temporary voice name" />
+        <button id="voiceCloneRecordButton" class="voice-clone-button" type="button" disabled>Record sample</button>
+        <button id="voiceCloneStopButton" class="voice-clone-button" type="button" disabled>Stop recording</button>
+        <label class="voice-clone-button" for="voiceCloneFile">Choose audio file</label>
+        <input id="voiceCloneFile" class="voice-clone-file" type="file" accept="audio/*" disabled />
+        <button id="voiceCloneCreateButton" class="voice-clone-button" type="button" disabled>Create temporary clone</button>
+      </div>
+      <div id="voiceCloneStatus" class="voice-clone-status">Waiting for the multi-speakers model...</div>
+    </section>
     <div class="contact-actions" aria-label="DaVoice contact options">
       <div class="contact-actions-title">Ready to bring on-device voice into your product?</div>
       <a class="contact-action primary" href="https://davoice.io/contact-us" target="_blank" rel="noopener noreferrer">
@@ -295,6 +325,10 @@
       <a class="contact-action" href="https://davoice.io/contact-us" target="_blank" rel="noopener noreferrer">
         <strong>Integrate DaVoice →</strong>
         <span>Add voice capabilities to your application.</span>
+      </a>
+      <a class="contact-action" href="https://davoice.io/contact-us" target="_blank" rel="noopener noreferrer">
+        <strong>Need another language? →</strong>
+        <span>Talk to DaVoice about language support.</span>
       </a>
     </div>
   </div>
