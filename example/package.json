@@ -4,9 +4,11 @@
   "description": "An example app using web-wake-word-cpu-gpu-opt",
   "main": "example.js",
   "scripts": {
+    "postinstall": "node scripts/ensure-lfs.js",
+    "ensure-lfs": "node scripts/ensure-lfs.js",
     "build": "node build.js",
     "gen-cert": "node generate-cert.js",
-    "start": "node generate-cert.js && http-server . -p 8080 --ssl --cert cert.pem --key key.pem --cors",
+    "start": "node generate-cert.js && http-server . -p 8080 --ssl --cert cert.pem --key key.pem --cors -c-1",
     "clean": "rimraf dist"
   },
   "author": "Your Name",
@@ -25,6 +27,6 @@
   "dependencies": {
     "http-server": "^14.1.1",
     "path-browserify": "^1.0.1",
-    "web-wake-word-cpu-gpu-opt": "^2.0.12"
+    "web-wake-word-cpu-gpu-opt": "^2.0.18"
   }
 }

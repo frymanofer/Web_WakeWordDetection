@@ -1,8 +1,13 @@
 // example/example.js
-import { KeywordDetector } from 'web-wake-word-cpu-gpu-opt';
 //import path from 'path-browserify';
 
 const modelsSuffix = '.onnx';
+let daVoicePackagePromise;
+
+function loadDaVoicePackage() {
+  daVoicePackagePromise ??= import('web-wake-word-cpu-gpu-opt');
+  return daVoicePackagePromise;
+}
 
 /*
   *** IMPORTANT ***
@@ -16,13 +21,21 @@ document.addEventListener('DOMContentLoaded', async () => {
  //const licenseManager = new window.main.LicenseManager();
   // Read the license key from the file
 //  const licenseKey = process.env.LICENSE_KEY || "DEFAULT_LICENSE_KEY";
-  const licenseKey = "MTc4ODIxMDAwMDAwMA==-cTpBN8sQsfgY2ZYWRIPOWlsFBEAKpoben68MpeQppwo=";
+  const licenseKey = "MTc5NjA3NjAwMDAwMA==-FmI0i6C8wjKqQwmvi/PAmUy9ayviOGvWhGLFGHZrg9I=";
   console.log('License Key:', licenseKey);
   // Initialize Keyword Detector
   const threshold = 0.99;
   const bufferCount = 3;
 
   const statusElement = document.getElementById('status');
+  const modeChooser = document.getElementById('modeChooser');
+  const wakeWordPanel = document.getElementById('wakeWordPanel');
+  const ttsPanel = document.getElementById('ttsPanel');
+  const wakeWordBackButton = document.getElementById('wakeWordBackButton');
+  const ttsBackButton = document.getElementById('ttsBackButton');
+  const modeButtons = Array.from(document.querySelectorAll('[data-mode]'));
+  let keywordDetector = null;
+  let activeMode = null;
   function showAutoClosingAlert(message, duration = 5000) {
     const alertBox = document.createElement('div');
     alertBox.innerText = message;
@@ -56,6 +69,182 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sttLanguageHint = document.getElementById('sttLanguageHint');
   const sttUnsupportedNote = document.getElementById('sttUnsupportedNote');
   const OTHER_LANGUAGE_VALUE = '__other__';
+
+  // ---- Text-to-speech (multi-speakers DaVoice TTS2 model) ----
+  // The multi-speakers bundle contains multiple voices. Load it once, select Rich as
+  // the default voice (matching the React Native example), and switch voices
+  // with setVoice() instead of loading one .dm file per voice.
+  const TTS_MODEL_URL = './models/tts/model_ex2_rich_kate.dm';
+  const DEFAULT_TTS_VOICE = 'Rich';
+  const TTS_WASM_BASE_PATH = 'https://127.0.0.1:8080/dist/';
+
+  const ttsLoadButton = document.getElementById('ttsLoadButton');
+  const ttsProgressRow = document.getElementById('ttsProgressRow');
+  const ttsProgressBar = document.getElementById('ttsProgressBar');
+  const ttsProgressLabel = document.getElementById('ttsProgressLabel');
+  const ttsUseModelSection = document.getElementById('ttsUseModelSection');
+  const ttsHdVoiceGroup = document.getElementById('ttsHdVoiceGroup');
+  const ttsHdVoiceRow = document.getElementById('ttsHdVoiceRow');
+  const ttsLdVoiceGroup = document.getElementById('ttsLdVoiceGroup');
+  const ttsLdVoiceRow = document.getElementById('ttsLdVoiceRow');
+  const ttsRichVoiceGroup = document.getElementById('ttsRichVoiceGroup');
+  const ttsRichVoiceRow = document.getElementById('ttsRichVoiceRow');
+  const ttsTextEl = document.getElementById('ttsText');
+  const ttsSpeakButton = document.getElementById('ttsSpeakButton');
+  const ttsStopButton = document.getElementById('ttsStopButton');
+  const ttsStatusEl = document.getElementById('ttsStatus');
+
+  let ttsInstance = null;
+  let activeTtsVoice = null;
+  const STUDIO_VOICE_ORDER = ['Rich', 'Ariana', 'Hanna'];
+  const LIGHTWEIGHT_VOICE_ORDER = ['Matthew', 'Kate', 'Jenny', 'Gloria'];
+
+  function formatBytes(n) {
+    return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  async function selectTtsVoice(voiceName, selectedRadio = null) {
+    if (!ttsInstance) return;
+    const selected = await ttsInstance.setVoice(voiceName);
+    if (!selected) {
+      ttsStatusEl.textContent = `Voice ${voiceName} is not available.`;
+      return;
+    }
+    activeTtsVoice = voiceName;
+    const matchingRadios = Array.from(ttsUseModelSection.querySelectorAll('input[type="radio"]'))
+      .filter((radio) => radio.value === voiceName);
+    matchingRadios.forEach((radio) => {
+      radio.checked = false;
+    });
+    (selectedRadio || matchingRadios[0]).checked = true;
+    ttsStatusEl.textContent = `${voiceName} in use.`;
+    ttsSpeakButton.disabled = false;
+  }
+
+  function addUseModelOption(voiceName, row) {
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex; align-items:center; gap:4px; font-size:14px; cursor:pointer;';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'ttsUseModel';
+    radio.value = voiceName;
+    radio.addEventListener('change', () => { void selectTtsVoice(voiceName, radio); });
+    label.appendChild(radio);
+    label.appendChild(document.createTextNode(voiceName));
+    row.appendChild(label);
+  }
+
+  async function loadTtsModel() {
+    if (ttsInstance) return;
+
+    ttsLoadButton.disabled = true;
+    ttsProgressRow.style.display = 'block';
+    ttsProgressBar.style.width = '0%';
+    ttsProgressLabel.textContent = 'Downloading multi-speakers model...';
+    ttsStatusEl.textContent = 'Loading multi-speakers model...';
+
+    try {
+      const { TextToSpeech } = await loadDaVoicePackage();
+      const tts = new TextToSpeech();
+      await tts.init(TTS_MODEL_URL, {
+        wasmBasePath: TTS_WASM_BASE_PATH,
+        voice: DEFAULT_TTS_VOICE,
+        onProgress: (loaded, total) => {
+          const pct = total ? Math.min(100, Math.floor((loaded / total) * 100)) : 0;
+          ttsProgressBar.style.width = pct + '%';
+          ttsProgressLabel.textContent =
+            `Downloading multi-speakers model: ${formatBytes(loaded)} / ${formatBytes(total)} (${pct}%)`;
+        }
+      });
+
+      ttsInstance = tts;
+      const voices = tts.getAllVoices();
+      ttsHdVoiceRow.replaceChildren();
+      ttsLdVoiceRow.replaceChildren();
+      ttsRichVoiceRow.replaceChildren();
+
+      const voiceByName = new Map(voices.map((voice) => [voice.toLowerCase(), voice]));
+      const richVoice = voiceByName.get('rich');
+      const studioVoices = STUDIO_VOICE_ORDER
+        .map((voice) => voiceByName.get(voice.toLowerCase()))
+        .filter(Boolean);
+      const studioVoiceNames = new Set([
+        ...(richVoice ? [richVoice] : []),
+        ...studioVoices,
+      ].map((voice) => voice.toLowerCase()));
+      const lightweightVoices = voices
+        .filter((voice) => !studioVoiceNames.has(voice.toLowerCase()))
+        .sort((a, b) => {
+          const aIndex = LIGHTWEIGHT_VOICE_ORDER.indexOf(a);
+          const bIndex = LIGHTWEIGHT_VOICE_ORDER.indexOf(b);
+          return (aIndex < 0 ? Number.MAX_SAFE_INTEGER : aIndex) -
+            (bIndex < 0 ? Number.MAX_SAFE_INTEGER : bIndex);
+        });
+
+      studioVoices.forEach((voice) => addUseModelOption(voice, ttsHdVoiceRow));
+      lightweightVoices.forEach((voice) => addUseModelOption(voice, ttsLdVoiceRow));
+      if (richVoice) addUseModelOption(richVoice, ttsRichVoiceRow);
+      ttsHdVoiceGroup.style.display = studioVoices.length ? 'block' : 'none';
+      ttsLdVoiceGroup.style.display = lightweightVoices.length ? 'block' : 'none';
+      ttsRichVoiceGroup.style.display = richVoice ? 'block' : 'none';
+      ttsUseModelSection.style.display = voices.length ? 'block' : 'none';
+      await selectTtsVoice(
+        DEFAULT_TTS_VOICE,
+        ttsRichVoiceRow.querySelector('input[type="radio"]') || null,
+      );
+      ttsProgressRow.style.display = 'none';
+      ttsLoadButton.textContent = 'Multi-speakers model ✓ (loaded)';
+    } catch (error) {
+      console.error('TTS init error:', error);
+      ttsProgressRow.style.display = 'none';
+      ttsStatusEl.textContent = `Failed to load multi-speakers model: ${error.message || error}`;
+      showAutoClosingAlert(`Failed to load multi-speakers model: ${error.message || error}`, 6000);
+      ttsLoadButton.disabled = false;
+    }
+  }
+
+  ttsLoadButton.addEventListener('click', () => { void loadTtsModel(); });
+
+  ttsSpeakButton.addEventListener('click', async () => {
+    if (!ttsInstance || !activeTtsVoice) return;
+    const text = ttsTextEl.value.trim();
+    if (!text) return;
+
+    ttsSpeakButton.disabled = true;
+    ttsStopButton.disabled = false;
+    ttsStatusEl.textContent = `${activeTtsVoice} speaking...`;
+    try {
+      await ttsInstance.speak(text);
+      ttsStatusEl.textContent = `${activeTtsVoice} in use.`;
+    } catch (error) {
+      console.error('TTS speak error:', error);
+      ttsStatusEl.textContent = `Speak error: ${error.message || error}`;
+    } finally {
+      ttsSpeakButton.disabled = false;
+      ttsStopButton.disabled = true;
+    }
+  });
+
+  ttsStopButton.addEventListener('click', () => {
+    if (ttsInstance) {
+      ttsInstance.stop();
+    }
+  });
+
+  document.querySelectorAll('.tts-style-example').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const example = button.dataset.example || '';
+      ttsTextEl.value = example;
+      ttsTextEl.focus();
+      try {
+        await navigator.clipboard.writeText(example);
+        ttsStatusEl.textContent = 'Example copied and placed in the text box.';
+      } catch (error) {
+        // The text is still placed in the textarea if clipboard access is unavailable.
+        ttsStatusEl.textContent = 'Example placed in the text box. Select it to copy.';
+      }
+    });
+  });
 
   // Tracks whether the browser supports the Web Speech API. Set once
   // keywordDetector.enableSpeechToText() has been called (see bindSpeechToText
@@ -154,6 +343,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   sttLanguageCustom.addEventListener('blur', applyCustomLanguage);
 
+  async function initializeWakeWordMode() {
+    if (keywordDetector) {
+      await keywordDetector.startListening();
+      return;
+    }
+
   // Usage
   const onKeywordDetected = async (detected) => {
       if (detected) {
@@ -180,7 +375,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* Alternative for a single model 
     const modelToUse = "need_help_now.onnx";
 
-    const keywordDetector = new KeywordDetector(
+    const { KeywordDetector } = await loadDaVoicePackage();
+    keywordDetector = new KeywordDetector(
       modelsFolderPath,
       modelToUse,
       threshold,
@@ -220,7 +416,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       Also where the audioWorklet is placed which is the last argument. The file is found in "node_modules/web-wake-word-cpu-gpu-opt/dist/audio-worklet-processor.js"
       You will also need to copy it and determine its location
     */
-    const keywordDetector = new KeywordDetector(
+    keywordDetector = new KeywordDetector(
       /* Provide a link to the model location in your app */ 
       modelsFolderPath,
       modelParamsArr, 
@@ -252,4 +448,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization error:', error);
     statusElement.textContent = 'Error initializing keyword detector.';
   }
+  }
+
+  async function returnToModeChooser() {
+    if (keywordDetector && activeMode === 'wakeword') {
+      try {
+        await keywordDetector.stopListening();
+      } catch (error) {
+        console.warn('Could not stop wake word detection:', error);
+      }
+    }
+    if (ttsInstance) ttsInstance.stop();
+    activeMode = null;
+    modeChooser.style.display = 'block';
+    wakeWordPanel.style.display = 'none';
+    ttsPanel.style.display = 'none';
+  }
+
+  async function selectMode(mode) {
+    activeMode = mode;
+    modeChooser.style.display = 'none';
+    wakeWordPanel.style.display = mode === 'wakeword' ? 'block' : 'none';
+    ttsPanel.style.display = mode === 'tts' ? 'block' : 'none';
+    if (mode === 'wakeword') {
+      statusElement.textContent = 'Loading wake word models...';
+      await initializeWakeWordMode();
+    } else {
+      ttsStatusEl.textContent = ttsInstance ? `${activeTtsVoice} in use.` : 'Load the multi-speakers model to begin.';
+    }
+  }
+
+  modeButtons.forEach((button) => {
+    button.addEventListener('click', () => { void selectMode(button.dataset.mode); });
+  });
+  wakeWordBackButton.addEventListener('click', () => { void returnToModeChooser(); });
+  ttsBackButton.addEventListener('click', () => { void returnToModeChooser(); });
 });
