@@ -147,6 +147,33 @@
     .voice-clone-status { margin-top: 8px; color: #667085; font-size: 12px; }
     .voice-clone-file { max-width: 210px; font-size: 12px; }
     .tts-model-gate { margin: 10px 0 12px; padding: 9px 11px; border-radius: 8px; color: #667085; background: #f2f4f8; font-size: 12px; }
+    .tts-model-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 10px 12px; border: 1px solid #e7ebf3; border-radius: 10px; background: #fbfcfe; }
+    .tts-model-heading { color: #40516d; font-size: 12px; font-weight: 700; }
+    .tts-model-badge { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; color: #4666c8; background: #eef3ff; font-size: 11px; font-weight: 700; }
+    .tts-section { margin-top: 14px; padding: 14px; border: 1px solid #e7ebf3; border-radius: 14px; background: #fcfdff; }
+    .tts-section-title { margin: 0 0 10px; color: #40516d; font-size: 13px; font-weight: 700; }
+    .tts-compose { margin-top: 14px; }
+    .tts-textarea { display: block; box-sizing: border-box; width: 100%; min-height: 104px; resize: vertical; border: 1px solid #dbe3f0; border-radius: 12px; font: inherit; line-height: 1.5; padding: 12px; }
+    .tts-textarea:focus { border-color: #8ba3eb; outline: 3px solid rgba(70, 102, 200, .12); }
+    .tts-textarea:disabled { background: #f3f4f7; cursor: not-allowed; }
+    .tts-style-hint { margin-top: 8px; color: #667085; font-size: 12px; line-height: 1.45; }
+    .tts-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .tts-actions button { min-width: 88px; padding: 10px 14px; border: 1px solid #c9d4ea; border-radius: 9px; color: #4666c8; background: #f8faff; cursor: pointer; }
+    .tts-actions button:first-child { border-color: #4666c8; color: #fff; background: #4666c8; }
+    .tts-actions button:hover:not(:disabled), .tts-actions button:focus-visible { border-color: #8ba3eb; outline: none; }
+    .tts-actions button:disabled { opacity: .5; cursor: default; }
+    .tts-status { margin-top: 10px; color: #667085; font-size: 12px; line-height: 1.4; }
+    .voice-clone-panel { margin-top: 14px; padding: 14px; border: 1px solid #e7ebf3; border-radius: 14px; background: #fcfdff; }
+    .voice-clone-panel summary { color: #40516d; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .voice-clone-panel summary::marker { color: #4666c8; }
+    .voice-clone-panel p { margin: 12px 0 10px; color: #667085; font-size: 12px; line-height: 1.45; }
+    @media (max-width: 560px) {
+      .tts-model-bar { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .tts-actions { flex-direction: column; }
+      .tts-actions button { width: 100%; }
+      .voice-clone-controls { align-items: stretch; flex-direction: column; }
+      .voice-clone-controls input[type="text"], .voice-clone-file, .voice-clone-button { width: 100%; box-sizing: border-box; }
+    }
     #status { margin: 0; padding: 14px 16px; border-radius: 12px; color: #40516d; background: #eef3ff; }
     button { font: inherit; }
     @media (max-width: 560px) {
@@ -243,7 +270,10 @@
       <button id="ttsBackButton" class="back-button" type="button">← Choose another test</button>
     </div>
 
-    <div id="ttsModelHeading" style="font-size:13px; font-weight:bold; color:#444; margin-bottom:6px;">Multi-speakers model</div>
+    <div class="tts-model-bar">
+      <div id="ttsModelHeading" class="tts-model-heading">Multi-speakers model</div>
+      <span class="tts-model-badge">On-device</span>
+    </div>
     <div id="ttsVoiceRow" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
       <button id="ttsLoadButton" class="tts-load-button" style="display:none;">Retry loading multi-speakers model</button>
     </div>
@@ -256,8 +286,8 @@
     <div id="ttsModelGate" class="tts-model-gate">Load the multi-speakers model to unlock voice selection, speech, examples, and voice cloning.</div>
 
     <!-- Filled with the voices embedded in the multi-speakers model. -->
-    <div id="ttsUseModelSection" style="display:none; margin-bottom:12px; padding-top:12px; border-top:1px solid #ddd;">
-      <div style="font-size:13px; font-weight:bold; color:#444; margin-bottom:6px;">Use model</div>
+    <div id="ttsUseModelSection" class="tts-section" style="display:none;">
+      <div class="tts-section-title">Choose a voice</div>
       <div id="ttsCloneVoiceGroup" style="display:none; margin-bottom:12px;">
         <div style="font-size:12px; font-weight:bold; color:#667085; margin-bottom:6px;">Temporary cloned voice</div>
         <div id="ttsCloneVoiceRow" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
@@ -291,19 +321,21 @@
       </div>
     </div>
 
-    <textarea id="ttsText" rows="3" disabled style="width:100%; box-sizing:border-box; font-size:14px; padding:6px;"
-      placeholder="Type text to speak once the model is loaded...">Hello, my name is Rich. I will record a new record today.</textarea>
-    <div style="margin-top:8px; color:#667085; font-size:12px; line-height:1.5;">
+    <div class="tts-compose">
+      <textarea id="ttsText" class="tts-textarea" rows="3" disabled
+        placeholder="Type text to speak once the model is loaded...">Hello, my name is Rich. I will record a new record today.</textarea>
+    <div class="tts-style-hint">
       Rich experimental styles: add a bracket tag before text, for example
       <code>[happy] Hello!</code>, <code>[whispering and angry] Listen.</code>, or
       <code>[shouting happy] Great job!</code>.
     </div>
-    <div style="margin-top:8px; display:flex; gap:8px;">
+    <div class="tts-actions">
       <button id="ttsSpeakButton" disabled>Speak</button>
       <button id="ttsStopButton" disabled>Stop</button>
     </div>
-    <div id="ttsStatus" style="font-size:13px; color:#666; margin-top:8px;">No voice loaded yet.</div>
-    <section class="voice-clone-panel" aria-labelledby="voiceCloneTitle">
+    <div id="ttsStatus" class="tts-status">No voice loaded yet.</div>
+    </div>
+    <section class="voice-clone-panel">
       <h3 id="voiceCloneTitle">Try a temporary voice clone</h3>
       <p>Record about 10 seconds or choose an audio file. Each clone is available for this demo only, and all temporary files are deleted when you leave the page.</p>
       <div class="voice-clone-controls">
